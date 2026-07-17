@@ -3,7 +3,7 @@ import "./style.css";
 
 const statistics = [
     {
-        number: "500H+",
+        number: "500+",
         title: "Active Students",
         icon: "🎓",
     },
@@ -30,7 +30,7 @@ const Statistics = () => {
             <div className="stats-header">
                 <h2>Our Impact</h2>
                 <p>
-                    Thousands of students are learning and building successful
+                    Hundreds of students are learning and building successful
                     careers through Chifrica Institute.
                 </p>
             </div>

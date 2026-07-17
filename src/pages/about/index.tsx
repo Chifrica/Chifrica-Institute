@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import "./style.css";
 
 const About = () => {
@@ -140,7 +141,7 @@ const About = () => {
 
                 <div className="stat">
 
-                    <h1>20K+</h1>
+                    <h1>500+</h1>
 
                     <p>Students</p>
 
@@ -148,7 +149,7 @@ const About = () => {
 
                 <div className="stat">
 
-                    <h1>150+</h1>
+                    <h1>12+</h1>
 
                     <p>Courses</p>
 
@@ -156,7 +157,7 @@ const About = () => {
 
                 <div className="stat">
 
-                    <h1>80+</h1>
+                    <h1>5+</h1>
 
                     <p>Professional Tutors</p>
 
@@ -185,9 +186,11 @@ const About = () => {
                     Chifrica Institute.
                 </p>
 
-                <button>
-                    Start Learning
-                </button>
+                <Link to="/login">
+                    <button>
+                        Start Learning
+                    </button>
+                </Link>
 
             </section>
 

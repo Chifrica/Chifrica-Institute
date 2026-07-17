@@ -42,12 +42,12 @@ const Hero = () => {
                 <div className="hero-stats">
 
                     <div className="stat-box">
-                        <h2>10K+</h2>
+                        <h2>500+</h2>
                         <p>Students</p>
                     </div>
 
                     <div className="stat-box">
-                        <h2>120+</h2>
+                        <h2>12+</h2>
                         <p>Courses</p>
                     </div>
 
