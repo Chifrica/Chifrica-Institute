@@ -1,4 +1,3 @@
-import React from "react";
 import "./style.css";
 import { Link } from "react-router-dom";
 
@@ -18,7 +17,7 @@ const Hero = () => {
                 </h1>
 
                 <p>
-                    Chifrica Institute is an institutional platform where
+                    Chifrica Institute is a technology academy  where
                     students, children, and aspiring developers can learn
                     Programming, Web Development, Mobile App Development,
                     Artificial Intelligence, UI/UX Design, Data Science,

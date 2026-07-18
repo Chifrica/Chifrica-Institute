@@ -1,5 +1,3 @@
-import React from "react";
-import Navbar from "../../components/navbars";
 import Hero from "../../components/hero";
 import Statistics from "../statistics";
 import "./style.css";

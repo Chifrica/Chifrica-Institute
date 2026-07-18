@@ -9,6 +9,7 @@ import Register from './pages/register'
 import { Routes, Route } from 'react-router-dom'
 import Contact from './pages/contact'
 import KidsAcademy from './pages/kidAcademy'
+import Footer from './components/footers'
 
 function App() {
   return (
@@ -29,6 +30,8 @@ function App() {
           <Route path="*" element={<Home />} />
         </Routes>
       </main>
+
+      <Footer />
 
       <div className="ticks"></div>
       <section id="spacer"></section>
