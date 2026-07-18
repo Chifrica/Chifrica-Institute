@@ -34,7 +34,7 @@ const Footer = () => {
 
                     <div className="social-icons">
 
-                        <a href="https://www.facebook.cm/share/17kQ31yK5U/">
+                        <a href="https://www.facebook.com/share/17kQ31yK5U/">
                             <FaFacebookF />
                         </a>
 

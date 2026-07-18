@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Hero from "../../components/hero";
 import Statistics from "../statistics";
 import "./style.css";
@@ -162,7 +163,9 @@ const Home = () => {
                         Chifrica Institute.
                     </p>
 
-                    <button>Get Started Today</button>
+                    <Link to="/login">
+                        <button>Get Started Today</button>
+                    </Link>
 
                 </section>
 
