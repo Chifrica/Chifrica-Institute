@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import "./style.css";
 
 const Login = () => {
-    const [showPassword, setShowPassword] = useState(false);
+    const [showPassword] = useState(false);
+    const [password, setPassword] = useState("");
 
     return (
         <div className="login-page">
@@ -53,6 +54,8 @@ const Login = () => {
                             <input
                                 type={showPassword ? "text" : "password"}
                                 placeholder="Enter password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                             />
 
                         </div>
