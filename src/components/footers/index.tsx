@@ -34,7 +34,7 @@ const Footer = () => {
 
                     <div className="social-icons">
 
-                        <a href="#">
+                        <a href="https://www.facebook.cm/share/17kQ31yK5U/">
                             <FaFacebookF />
                         </a>
 
@@ -50,7 +50,7 @@ const Footer = () => {
                             <FaYoutube />
                         </a>
 
-                        <a href="#">
+                        <a href="https://wa.me/2347040311071">
                             <FaWhatsapp />
                         </a>
 
