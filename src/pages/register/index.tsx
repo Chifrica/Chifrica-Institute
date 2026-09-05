@@ -83,7 +83,7 @@ const Register = () => {
                         <div className="input-group">
                             <label>Phone Number</label>
                             <input
-                                type="tel"
+                                type="number"
                                 name="phone"
                                 placeholder="Enter phone number"
                                 onChange={handleChange}
