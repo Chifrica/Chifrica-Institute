@@ -47,7 +47,10 @@ const Home = () => {
                                 <div className="course-footer">
                                     <span>⭐⭐⭐⭐⭐</span>
 
-                                    <button>Enroll Now</button>
+                                    <Link to="/login">
+                                        <button>Enroll Now</button>
+                                    </Link>
+
                                 </div>
                             </div>
                         </div>
@@ -72,7 +75,9 @@ const Home = () => {
                                 <div className="course-footer">
                                     <span>⭐⭐⭐⭐⭐</span>
 
-                                    <button>Enroll Now</button>
+                                    <Link to="/login">
+                                        <button>Enroll Now</button>
+                                    </Link>
                                 </div>
                             </div>
                         </div>
@@ -97,7 +102,9 @@ const Home = () => {
                                 <div className="course-footer">
                                     <span>⭐⭐⭐⭐⭐</span>
 
-                                    <button>Enroll Now</button>
+                                    <Link to="/login">
+                                        <button>Enroll Now</button>
+                                    </Link>
                                 </div>
                             </div>
                         </div>

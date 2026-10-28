@@ -1,109 +1,79 @@
-import  { useState } from "react";
 import { Link } from "react-router-dom";
+import "../auth.css";
 import "./style.css";
 
 const Login = () => {
-    const [showPassword] = useState(false);
-    const [password, setPassword] = useState("");
-
     return (
-        <div className="login-page">
-
-            <div className="login-left">
-                <div className="overlay">
-                    <h1>Welcome Back!</h1>
-
-                    <p>
-                        Continue your learning journey with
-                        <strong> Chifrica Institute.</strong>
-                    </p>
-
-                    <ul>
-                        <li>✔ Learn Programming</li>
-                        <li>✔ AI & Machine Learning</li>
-                        <li>✔ Web Development</li>
-                        <li>✔ Mobile App Development</li>
-                        <li>✔ UI/UX Design</li>
-                    </ul>
+        <main className="auth-page login-page">
+            <section className="auth-brand" aria-label="Chifrica Institute">
+                <div className="auth-brand-logo">
+                    Chifrica <span>Institute</span>
                 </div>
-            </div>
 
-            <div className="login-right">
+                <div className="auth-brand-copy">
+                    <p className="auth-eyebrow">YOUR LEARNING JOURNEY</p>
+                    <h1>Learn today.<br />Build tomorrow.</h1>
+                    <p className="auth-brand-description">
+                        Continue building the skills and confidence to shape your future.
+                    </p>
+                </div>
 
-                <div className="login-card">
+                <p className="auth-brand-note">Practical skills. Brighter futures.</p>
+            </section>
 
-                    <h2>Login</h2>
+            <section className="auth-panel">
+                <div className="auth-card login-card">
+                    <Link className="auth-back" to="/">← Back to home</Link>
+                    <h2>Welcome back</h2>
+                    <p className="auth-subtitle">Sign in to your account to continue.</p>
 
-                    <p>Sign in to your account</p>
-
-                    <form>
-
-                        <div className="input-group">
-                            <label>Email Address</label>
-
-                            <input
-                                type="email"
-                                placeholder="Enter your email"
-                            />
-                        </div>
-
-                        <div className="input-group">
-
-                            <label>Password</label>
-
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                placeholder="Enter password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-
-                        </div>
-
-                        <div className="options">
-
-                            <label>
-
-                                <input type="checkbox" />
-
-                                Remember Me
-
+                    <form className="auth-form">
+                        <div className="auth-field">
+                            <label className="auth-visually-hidden" htmlFor="login-email">
+                                Email address
                             </label>
-
-                            <Link to="/forgot-password">
-                                Forgot Password?
-                            </Link>
-
+                            <input
+                                id="login-email"
+                                type="email"
+                                placeholder="Email address"
+                                autoComplete="email"
+                                required
+                            />
                         </div>
 
-                        <button className="login-btn">
-                            Login
-                        </button>
+                        <div className="auth-field">
+                            <label className="auth-visually-hidden" htmlFor="login-password">
+                                Password
+                            </label>
+                            <input
+                                id="login-password"
+                                type="password"
+                                placeholder="Password"
+                                autoComplete="current-password"
+                                required
+                            />
+                        </div>
 
+                        <div className="auth-options">
+                            <label className="auth-remember">
+                                <input type="checkbox" />
+                                Remember me
+                            </label>
+                            <Link className="auth-text-link" to="/forgot-password">
+                                Forgot password?
+                            </Link>
+                        </div>
+
+                        <button className="auth-primary" type="submit">Log in</button>
                     </form>
 
-                    <div className="divider">
-                        <span>OR</span>
-                    </div>
-
-                    <button className="google-btn">
-                        Continue with Google
-                    </button>
-
-                    <p className="register-link">
-                        Don't have an account?
-
-                        <Link to="/register">
-                            Register
-                        </Link>
-
+                    <p className="auth-switch">
+                        New to Chifrica?
+                        <Link to="/register">Create account</Link>
                     </p>
-
                 </div>
-
-            </div>
-
-        </div>
+            </section>
+        </main>
     );
 };
 

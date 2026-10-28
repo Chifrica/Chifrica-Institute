@@ -6,15 +6,18 @@ import About from './pages/about'
 import Login from './pages/login'
 import Statistics from './pages/statistics'
 import Register from './pages/register'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import Contact from './pages/contact'
 import KidsAcademy from './pages/kidAcademy'
 import Footer from './components/footers'
 
 function App() {
+  const { pathname } = useLocation()
+  const isAuthPage = pathname === '/login' || pathname === '/register'
+
   return (
     <>
-      <Navbar />
+      {!isAuthPage && <Navbar />}
 
       <main>
         <Routes>
@@ -31,7 +34,7 @@ function App() {
         </Routes>
       </main>
 
-      <Footer />
+      {!isAuthPage && <Footer />}
 
       <div className="ticks"></div>
       <section id="spacer"></section>

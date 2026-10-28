@@ -86,9 +86,7 @@ const Footer = () => {
 
                     <Link to="#">Web Development</Link>
 
-                    <Link to="#">React Development</Link>
-
-                    <Link to="#">React Native</Link>
+                    <Link to="#">Mobile App Development</Link>
 
                     <Link to="#">Artificial Intelligence</Link>
 

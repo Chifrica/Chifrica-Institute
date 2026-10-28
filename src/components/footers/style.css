@@ -7,7 +7,7 @@
 .footer-container {
     max-width: 1300px;
     margin: auto;
-    padding: 80px 7%;
+    padding: 30px 7%;
     display: grid;
     grid-template-columns: 2fr 1fr 1fr 1.3fr;
     gap: 50px;
@@ -79,7 +79,7 @@
 
 .newsletter {
     background: #2E8B57;
-    padding: 50px 7%;
+    padding: 10px 7%;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -130,9 +130,9 @@
 }
 
 .footer-bottom {
-    border-top: 1px solid rgba(255, 255, 255, .1);
+    border-top: 0.5px solid rgba(255, 255, 255, .1);
     text-align: center;
-    padding: 25px;
+    padding: 5px;
 }
 
 .footer-bottom p {

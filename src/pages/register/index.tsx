@@ -1,5 +1,6 @@
-import  { useState } from"react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import "../auth.css";
 import "./style.css";
 
 const Register = () => {
@@ -13,172 +14,176 @@ const Register = () => {
         confirmPassword: "",
     });
 
-    const handleChange = (e: { target: { name: any; value: any; }; }) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value,
         });
     };
 
-    const handleSubmit = (e: { preventDefault: () => void; }) => {
+    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         console.log(formData);
         alert("Registration Successful!");
     };
 
     return (
-        <div className="register-page">
-
-            <div className="register-left">
-                <div className="overlay">
-                    <h1>Join Chifrica Institute</h1>
-
-                    <p>
-                        Learn programming, Artificial Intelligence,
-                        Mobile App Development, UI/UX Design and many more.
-                    </p>
-
-                    <ul>
-                        <li>🎓 Professional Courses</li>
-                        <li>💻 Live Coding Classes</li>
-                        <li>📱 Mobile Learning</li>
-                        <li>🏆 Certificates</li>
-                        <li>🌍 Global Community</li>
-                    </ul>
+        <main className="auth-page register-page">
+            <section className="auth-brand" aria-label="Chifrica Institute">
+                <div className="auth-brand-logo">
+                    Chifrica <span>Institute</span>
                 </div>
-            </div>
 
-            <div className="register-right">
+                <div className="auth-brand-copy">
+                    <p className="auth-eyebrow">START SOMETHING NEW</p>
+                    <h1>Make your next move count.</h1>
+                    <p className="auth-brand-description">
+                        Join a community learning practical skills for a changing world.
+                    </p>
+                </div>
 
-                <div className="register-card">
+                <p className="auth-brand-note">Practical skills. Brighter futures.</p>
+            </section>
 
-                    <h2>Create Account</h2>
+            <section className="auth-panel">
+                <div className="auth-card register-card">
+                    <Link className="auth-back" to="/">← Back to home</Link>
+                    <h2>Create your account</h2>
+                    <p className="auth-subtitle">Get started on your learning journey.</p>
 
-                    <p>Start your learning journey today.</p>
+                    <form className="auth-form register-form" onSubmit={handleSubmit}>
+                        <div className="register-fields">
+                            <div className="auth-field">
+                                <label className="auth-visually-hidden" htmlFor="register-name">
+                                    Full name
+                                </label>
+                                <input
+                                    id="register-name"
+                                    type="text"
+                                    name="fullName"
+                                    placeholder="Full name"
+                                    autoComplete="name"
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
 
-                    <form onSubmit={handleSubmit}>
+                            <div className="auth-field">
+                                <label className="auth-visually-hidden" htmlFor="register-email">
+                                    Email address
+                                </label>
+                                <input
+                                    id="register-email"
+                                    type="email"
+                                    name="email"
+                                    placeholder="Email address"
+                                    autoComplete="email"
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
 
-                        <div className="input-group">
-                            <label>Full Name</label>
-                            <input
-                                type="text"
-                                name="fullName"
-                                placeholder="Enter full name"
-                                onChange={handleChange}
-                                required
-                            />
+                            <div className="auth-field">
+                                <label className="auth-visually-hidden" htmlFor="register-phone">
+                                    Phone number
+                                </label>
+                                <input
+                                    id="register-phone"
+                                    type="tel"
+                                    name="phone"
+                                    placeholder="Phone number"
+                                    autoComplete="tel"
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+
+                            {/* <div className="auth-field">
+                                <label className="auth-visually-hidden" htmlFor="register-country">
+                                    Country
+                                </label>
+                                <input
+                                    id="register-country"
+                                    type="text"
+                                    name="country"
+                                    placeholder="Country (optional)"
+                                    autoComplete="country-name"
+                                    onChange={handleChange}
+                                />
+                            </div> */}
+
+                            <div className="auth-field">
+                                <label className="auth-visually-hidden" htmlFor="register-course">
+                                    Course interested in
+                                </label>
+                                <select
+                                    id="register-course"
+                                    name="course"
+                                    onChange={handleChange}
+                                    required
+                                    defaultValue=""
+                                >
+                                    <option value="" disabled>Select a course</option>
+                                    <option>Web Development</option>
+                                    <option>React Development</option>
+                                    <option>React Native</option>
+                                    <option>Artificial Intelligence</option>
+                                    <option>Python Programming</option>
+                                    <option>Java Programming</option>
+                                    <option>UI/UX Design</option>
+                                    <option>Flutter</option>
+                                    <option>Cybersecurity</option>
+                                </select>
+                            </div>
+
+                            <div className="auth-field">
+                                <label className="auth-visually-hidden" htmlFor="register-password">
+                                    Password
+                                </label>
+                                <input
+                                    id="register-password"
+                                    type="password"
+                                    name="password"
+                                    placeholder="Password"
+                                    autoComplete="new-password"
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+
+                            <div className="auth-field">
+                                <label className="auth-visually-hidden" htmlFor="register-confirm-password">
+                                    Confirm password
+                                </label>
+                                <input
+                                    id="register-confirm-password"
+                                    type="password"
+                                    name="confirmPassword"
+                                    placeholder="Confirm password"
+                                    autoComplete="new-password"
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
                         </div>
 
-                        <div className="input-group">
-                            <label>Email</label>
-                            <input
-                                type="email"
-                                name="email"
-                                placeholder="Enter email"
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div className="input-group">
-                            <label>Phone Number</label>
-                            <input
-                                type="number"
-                                name="phone"
-                                placeholder="Enter phone number"
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div className="input-group">
-                            <label>Country</label>
-                            <input
-                                type="text"
-                                name="country"
-                                placeholder="Country"
-                                onChange={handleChange}
-                            />
-                        </div>
-
-                        <div className="input-group">
-                            <label>Course Interested In</label>
-
-                            <select
-                                name="course"
-                                onChange={handleChange}
-                                required
-                            >
-                                <option value="">Select Course</option>
-                                <option>Web Development</option>
-                                <option>React Development</option>
-                                <option>React Native</option>
-                                <option>Artificial Intelligence</option>
-                                <option>Python Programming</option>
-                                <option>Java Programming</option>
-                                <option>UI/UX Design</option>
-                                <option>Flutter</option>
-                                <option>Cybersecurity</option>
-                            </select>
-                        </div>
-
-                        <div className="input-group">
-                            <label>Password</label>
-                            <input
-                                type="password"
-                                name="password"
-                                placeholder="Password"
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div className="input-group">
-                            <label>Confirm Password</label>
-                            <input
-                                type="password"
-                                name="confirmPassword"
-                                placeholder="Confirm Password"
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div className="checkbox">
+                        <label className="auth-terms register-terms">
                             <input type="checkbox" required />
-                            <span>
-                                I agree to the Terms & Conditions
-                            </span>
-                        </div>
+                            I agree to the Terms &amp; Conditions
+                        </label>
 
-                        <button className="register-btn">
-                            Create Account
+                        <button className="auth-primary" type="submit">
+                            Create account
                         </button>
-
                     </form>
 
-                    <div className="divider">
-                        <span>OR</span>
-                    </div>
-
-                    <button className="google-btn">
-                        Continue with Google
-                    </button>
-
-                    <p className="login-link">
+                    <p className="auth-switch">
                         Already have an account?
-
-                        <Link to="/login">
-                            Login
-                        </Link>
-
+                        <Link to="/login">Log in</Link>
                     </p>
-
                 </div>
-
-            </div>
-
-        </div>
+            </section>
+        </main>
     );
 };
 

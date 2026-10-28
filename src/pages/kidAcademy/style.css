@@ -29,7 +29,7 @@ body {
     grid-template-columns: 1fr 1fr;
     align-items: center;
     gap: 60px;
-    padding: 100px 8%;
+    padding: 50px 8%;
     background: linear-gradient(135deg, #f5fff8, #eefdf6);
     min-height: 90vh;
 }
