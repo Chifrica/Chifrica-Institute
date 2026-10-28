@@ -1,10 +1,14 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import "../auth.css";
 import "./style.css";
 
 const Login = () => {
+    const [showPassword, setShowPassword] = useState(false);
+
     return (
-        <main className="auth-page login-page">
+        <div className="auth-page login-page">
             <section className="auth-brand" aria-label="Chifrica Institute">
                 <div className="auth-brand-logo">
                     Chifrica <span>Institute</span>
@@ -45,13 +49,24 @@ const Login = () => {
                             <label className="auth-visually-hidden" htmlFor="login-password">
                                 Password
                             </label>
-                            <input
-                                id="login-password"
-                                type="password"
-                                placeholder="Password"
-                                autoComplete="current-password"
-                                required
-                            />
+                            <div className="auth-password-input">
+                                <input
+                                    id="login-password"
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Password"
+                                    autoComplete="current-password"
+                                    required
+                                />
+                                <button
+                                    className="auth-password-toggle"
+                                    type="button"
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                    aria-pressed={showPassword}
+                                    onClick={() => setShowPassword((visible) => !visible)}
+                                >
+                                    {showPassword ? <FiEyeOff aria-hidden="true" /> : <FiEye aria-hidden="true" />}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="auth-options">
@@ -73,7 +88,7 @@ const Login = () => {
                     </p>
                 </div>
             </section>
-        </main>
+        </div>
     );
 };
 

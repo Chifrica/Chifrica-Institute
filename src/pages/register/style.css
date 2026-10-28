@@ -77,3 +77,23 @@
         font-size: 12px;
     }
 }
+
+@media (max-height: 560px) {
+    .register-card {
+        padding: 10px;
+    }
+
+    .register-card .auth-back,
+    .register-card .auth-subtitle {
+        margin-bottom: 6px;
+    }
+
+    .register-card .auth-switch {
+        margin-top: 6px;
+    }
+
+    .register-fields .auth-field input,
+    .register-fields .auth-field select {
+        height: 34px;
+    }
+}
