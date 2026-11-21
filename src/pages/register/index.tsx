@@ -81,7 +81,7 @@ const Register = () => {
             return;
         }
 
-        if (data.user) {
+        if (data.user && data.session) {
             const { error: profileError } = await supabase
                 .from("profiles")
                 .upsert({
@@ -97,7 +97,11 @@ const Register = () => {
             window.localStorage.setItem("chifrica.session", "supabase");
         }
         setSubmitting(false);
-        navigate("/courses");
+        if (data.session) {
+            navigate("/courses");
+        } else {
+            setSubmitError("Account created. Check your email and confirm it before logging in.");
+        }
     };
 
     const isPasswordInvalid = Boolean(passwordError && !passwordMeetsRequirements(formData.password));

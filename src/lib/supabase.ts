@@ -1,7 +1,10 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
+const configuredSupabaseUrl = "https://cobqmtujidfvjkyyowku.supabase.co";
+const configuredSupabaseKey = "sb_publishable_yN4IUly8nnYecPNHsP7kJg_WXss91VU";
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() || configuredSupabaseUrl;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() || configuredSupabaseKey;
 
 export const isSupabaseConfigured =
     Boolean(supabaseUrl) &&

@@ -80,7 +80,9 @@ const Login = () => {
                     <Link className="auth-back" to="/">← Back to home</Link>
                     <h2>Welcome back</h2>
                     <p className="auth-subtitle">
-                        Sign in to your account to continue. Demo access: <strong>Admin</strong> / <strong>Admin</strong>.
+                        {isSupabaseConfigured
+                            ? "Sign in with the email and password you used to create your account."
+                            : "Sign in to your account to continue."}
                     </p>
 
                     <form className="auth-form" onSubmit={handleSubmit}>
