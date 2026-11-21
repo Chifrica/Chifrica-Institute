@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import "../auth.css";
 import "./style.css";
+import { supabase, isSupabaseConfigured } from "../../lib/supabase";
+import { useNavigate } from "react-router-dom";
 
 const passwordMeetsRequirements = (password: string) =>
     /[A-Z]/.test(password) &&
@@ -13,6 +15,9 @@ const Register = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [passwordError, setPasswordError] = useState("");
+    const [submitError, setSubmitError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         fullName: "",
         email: "",
@@ -34,7 +39,7 @@ const Register = () => {
         }
     };
 
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!passwordMeetsRequirements(formData.password)) {
             setPasswordError("Password must include at least one uppercase letter, one number, and one symbol.");
@@ -45,8 +50,54 @@ const Register = () => {
             return;
         }
         setPasswordError("");
-        setPasswordError("");
-        alert("Registration Successful!");
+        setSubmitError("");
+        setSubmitting(true);
+
+        if (!isSupabaseConfigured) {
+            alert("Registration Successful!");
+            setSubmitting(false);
+            navigate("/login");
+            return;
+        }
+        if (!supabase) {
+            setSubmitError("Supabase is unavailable.");
+            setSubmitting(false);
+            return;
+        }
+
+        const { data, error } = await supabase.auth.signUp({
+            email: formData.email.trim(),
+            password: formData.password,
+            options: {
+                data: {
+                    full_name: formData.fullName.trim(),
+                    phone: formData.phone.trim(),
+                },
+            },
+        });
+        if (error) {
+            setSubmitError(error.message);
+            setSubmitting(false);
+            return;
+        }
+
+        if (data.user) {
+            const { error: profileError } = await supabase
+                .from("profiles")
+                .upsert({
+                    id: data.user.id,
+                    full_name: formData.fullName.trim(),
+                    phone: formData.phone.trim(),
+                });
+            if (profileError) {
+                setSubmitError(profileError.message);
+                setSubmitting(false);
+                return;
+            }
+            window.localStorage.setItem("chifrica.session", "supabase");
+        }
+        setSubmitting(false);
+        navigate("/courses");
     };
 
     const isPasswordInvalid = Boolean(passwordError && !passwordMeetsRequirements(formData.password));
@@ -234,8 +285,14 @@ const Register = () => {
                             I agree to the Terms &amp; Conditions
                         </label>
 
-                        <button className="auth-primary" type="submit">
-                            Create account
+                        {submitError && (
+                            <p className="auth-password-error" role="alert">
+                                {submitError}
+                            </p>
+                        )}
+
+                        <button className="auth-primary" type="submit" disabled={submitting}>
+                            {submitting ? "Creating account..." : "Create account"}
                         </button>
                     </form>
 

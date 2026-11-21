@@ -1,3 +1,10 @@
 .login-card {
     max-width: 430px;
 }
+
+.login-error {
+    margin: 0;
+    color: #b42318;
+    font-size: 13px;
+    line-height: 1.5;
+}

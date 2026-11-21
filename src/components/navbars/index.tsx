@@ -1,7 +1,9 @@
-import { useRef, useState, type FocusEvent } from "react";
+import { useEffect, useRef, useState, type FocusEvent } from "react";
 import "./style.css";
-import { Link } from "react-router-dom";
-import { FiChevronDown } from "react-icons/fi";
+import { Link, useNavigate } from "react-router-dom";
+import { FiAward, FiChevronDown, FiLogOut, FiUser } from "react-icons/fi";
+import { AUTH_SESSION_KEY, clearAuthSession } from "../../auth";
+import { supabase } from "../../lib/supabase";
 
 const courseLinks = [
     "Web & Software Development",
@@ -26,11 +28,50 @@ const kidsAcademyLinks = [
 const Navbar = () => {
     const [menuOpen, setMenuOpen] = useState(false);
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+    const [logoutSuccessOpen, setLogoutSuccessOpen] = useState(false);
+    const [authenticated, setAuthenticated] = useState(
+        () => window.localStorage.getItem(AUTH_SESSION_KEY) !== null,
+    );
     const hamburgerRef = useRef<HTMLButtonElement>(null);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const syncAuthentication = () => {
+            setAuthenticated(window.localStorage.getItem(AUTH_SESSION_KEY) !== null);
+        };
+        const closeOverlays = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setUserMenuOpen(false);
+                setLogoutConfirmOpen(false);
+            }
+        };
+        window.addEventListener("storage", syncAuthentication);
+        window.addEventListener("keydown", closeOverlays);
+        return () => {
+            window.removeEventListener("storage", syncAuthentication);
+            window.removeEventListener("keydown", closeOverlays);
+        };
+    }, []);
 
     const closeNavigation = () => {
         setMenuOpen(false);
         setOpenDropdown(null);
+        setUserMenuOpen(false);
+    };
+
+    const confirmLogOut = () => {
+        clearAuthSession();
+        if (supabase) {
+            void supabase.auth.signOut();
+        }
+        setAuthenticated(false);
+        setLogoutConfirmOpen(false);
+        setLogoutSuccessOpen(true);
+        closeNavigation();
+        navigate("/");
+        window.setTimeout(() => setLogoutSuccessOpen(false), 2600);
     };
 
     const handleDropdownBlur = (event: FocusEvent<HTMLDivElement>) => {
@@ -40,6 +81,7 @@ const Navbar = () => {
     };
 
     return (
+        <>
         <header className="navbar">
             <div className="logo">
                 <span className="logo-green">Chifrica</span>
@@ -66,6 +108,7 @@ const Navbar = () => {
             >
                 <Link to="/" onClick={closeNavigation}>Home</Link>
                 <Link to="/about" onClick={closeNavigation}>About</Link>
+                {authenticated && <Link to="/courses" onClick={closeNavigation}>My Learning</Link>}
 
                 <div
                     className={`nav-dropdown${openDropdown === "courses" ? " is-open" : ""}`}
@@ -133,16 +176,68 @@ const Navbar = () => {
 
                 <Link to="/blog" onClick={closeNavigation}>Blog</Link>
                 <Link to="/contact" onClick={closeNavigation}>Contact</Link>
+                {authenticated && (
+                    <div className="nav-mobile-account">
+                        <button type="button" onClick={() => { closeNavigation(); navigate("/courses#profile"); }}>
+                            Profile
+                        </button>
+                        <button type="button" onClick={() => { closeNavigation(); navigate("/courses#achievements"); }}>
+                            Achievements
+                        </button>
+                        <button type="button" onClick={() => { closeNavigation(); navigate("/courses#certificates"); }}>
+                            Certificates
+                        </button>
+                        <button type="button" onClick={() => { setMenuOpen(false); setLogoutConfirmOpen(true); }}>
+                            Logout
+                        </button>
+                    </div>
+                )}
             </nav>
 
             <div className="nav-buttons">
-                <Link to="/login" onClick={closeNavigation}>
-                    <button className="login-btn">Login</button>
-                </Link>
+                {authenticated ? (
+                    <div className={`nav-user-dropdown${userMenuOpen ? " is-open" : ""}`}>
+                        <button
+                            className="nav-user-trigger"
+                            type="button"
+                            aria-expanded={userMenuOpen}
+                            aria-controls="user-account-menu"
+                            onClick={() => setUserMenuOpen((open) => !open)}
+                        >
+                            <span className="nav-user-avatar"><FiUser aria-hidden="true" /></span>
+                            <span>User</span>
+                            <FiChevronDown aria-hidden="true" />
+                        </button>
+                        <div className="nav-user-menu" id="user-account-menu">
+                            <button type="button" onClick={() => { closeNavigation(); navigate("/courses#profile"); }}>
+                                <FiUser aria-hidden="true" />
+                                <span><strong>Profile</strong><small>View your account</small></span>
+                            </button>
+                            <button type="button" onClick={() => { closeNavigation(); navigate("/courses#achievements"); }}>
+                                <FiAward aria-hidden="true" />
+                                <span><strong>Achievements</strong><small>Completed learning</small></span>
+                            </button>
+                            <button type="button" onClick={() => { closeNavigation(); navigate("/courses#certificates"); }}>
+                                <FiAward aria-hidden="true" />
+                                <span><strong>Certificates</strong><small>View earned certificates</small></span>
+                            </button>
+                            <button className="nav-user-logout" type="button" onClick={() => { setUserMenuOpen(false); setLogoutConfirmOpen(true); }}>
+                                <FiLogOut aria-hidden="true" />
+                                <span><strong>Logout</strong><small>End this session</small></span>
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <Link to="/login" onClick={closeNavigation}>
+                            <button className="login-btn">Login</button>
+                        </Link>
 
-                <Link to="/register" onClick={closeNavigation}>
-                    <button className="register-btn">Get Started</button>
-                </Link>
+                        <Link to="/register" onClick={closeNavigation}>
+                            <button className="register-btn">Get Started</button>
+                        </Link>
+                    </>
+                )}
             </div>
 
             <button
@@ -156,6 +251,39 @@ const Navbar = () => {
                 ☰
             </button>
         </header>
+
+        {logoutConfirmOpen && (
+            <div className="nav-modal-backdrop" role="presentation" onMouseDown={(event) => {
+                if (event.target === event.currentTarget) {
+                    setLogoutConfirmOpen(false);
+                }
+            }}>
+                <section className="nav-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="logout-confirm-title">
+                    <span className="nav-confirm-icon"><FiLogOut aria-hidden="true" /></span>
+                    <h2 id="logout-confirm-title">Log out of Chifrica?</h2>
+                    <p>You will need to sign in again to continue your learning journey.</p>
+                    <div className="nav-confirm-actions">
+                        <button type="button" className="nav-confirm-cancel" onClick={() => setLogoutConfirmOpen(false)}>
+                            Cancel
+                        </button>
+                        <button type="button" className="nav-confirm-yes" onClick={confirmLogOut}>
+                            Yes, log out
+                        </button>
+                    </div>
+                </section>
+            </div>
+        )}
+
+        {logoutSuccessOpen && (
+            <div className="nav-success-toast" role="status" aria-live="polite">
+                <span><FiLogOut aria-hidden="true" /></span>
+                <div>
+                    <strong>Successfully logged out</strong>
+                    <small>See you again soon.</small>
+                </div>
+            </div>
+        )}
+        </>
     );
 };
 

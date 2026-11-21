@@ -1,11 +1,61 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import "../auth.css";
 import "./style.css";
+import { AUTH_SESSION_KEY } from "../../auth";
+import { DEMO_LEARNING_PROGRESS, LEARNING_PROGRESS_KEY } from "../../data/courses";
+import { supabase, isSupabaseConfigured } from "../../lib/supabase";
+import { setDemoAuthSession } from "../../auth";
 
 const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const navigate = useNavigate();
+
+    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        if (!isSupabaseConfigured) {
+            if (email.trim().toLowerCase() !== "admin" || password.trim() !== "Admin") {
+                setError("The demo login is Admin for email and password.");
+                return;
+            }
+
+            try {
+                if (window.localStorage.getItem(LEARNING_PROGRESS_KEY) === null) {
+                    window.localStorage.setItem(LEARNING_PROGRESS_KEY, JSON.stringify(DEMO_LEARNING_PROGRESS));
+                }
+                setDemoAuthSession("admin");
+                navigate("/courses");
+            } catch {
+                setError("We couldn't save your sign-in on this device.");
+            }
+            return;
+        }
+
+        if (!supabase) {
+            setError("Supabase is unavailable.");
+            return;
+        }
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password,
+        });
+        if (signInError) {
+            setError(signInError.message);
+            return;
+        }
+        window.localStorage.setItem(AUTH_SESSION_KEY, "supabase");
+        try {
+            navigate("/courses");
+        } catch (navigationError) {
+            console.error("Unable to open the courses page.", navigationError);
+            setError("Signed in, but unable to open My Learning.");
+        }
+    };
 
     return (
         <div className="auth-page login-page">
@@ -29,19 +79,26 @@ const Login = () => {
                 <div className="auth-card login-card">
                     <Link className="auth-back" to="/">← Back to home</Link>
                     <h2>Welcome back</h2>
-                    <p className="auth-subtitle">Sign in to your account to continue.</p>
+                    <p className="auth-subtitle">
+                        Sign in to your account to continue. Demo access: <strong>Admin</strong> / <strong>Admin</strong>.
+                    </p>
 
-                    <form className="auth-form">
+                    <form className="auth-form" onSubmit={handleSubmit}>
                         <div className="auth-field">
                             <label className="auth-visually-hidden" htmlFor="login-email">
-                                Email address
+                                Email address or username
                             </label>
                             <input
                                 id="login-email"
-                                type="email"
-                                placeholder="Email address"
-                                autoComplete="email"
+                                type="text"
+                                placeholder="Email address or username"
+                                autoComplete="username"
                                 required
+                                value={email}
+                                onChange={(event) => {
+                                    setEmail(event.target.value);
+                                    setError("");
+                                }}
                             />
                         </div>
 
@@ -56,6 +113,11 @@ const Login = () => {
                                     placeholder="Password"
                                     autoComplete="current-password"
                                     required
+                                    value={password}
+                                    onChange={(event) => {
+                                        setPassword(event.target.value);
+                                        setError("");
+                                    }}
                                 />
                                 <button
                                     className="auth-password-toggle"
@@ -79,6 +141,7 @@ const Login = () => {
                             </Link>
                         </div>
 
+                        {error && <p className="login-error" role="alert">{error}</p>}
                         <button className="auth-primary" type="submit">Log in</button>
                     </form>
 
