@@ -4,9 +4,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import "../auth.css";
 import "./style.css";
 import { AUTH_SESSION_KEY } from "../../auth";
-import { DEMO_LEARNING_PROGRESS, LEARNING_PROGRESS_KEY } from "../../data/courses";
 import { supabase, isSupabaseConfigured } from "../../lib/supabase";
-import { setDemoAuthSession } from "../../auth";
 
 const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
@@ -18,28 +16,11 @@ const Login = () => {
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        if (!isSupabaseConfigured) {
-            if (email.trim().toLowerCase() !== "admin" || password.trim() !== "Admin") {
-                setError("The demo login is Admin for email and password.");
-                return;
-            }
-
-            try {
-                if (window.localStorage.getItem(LEARNING_PROGRESS_KEY) === null) {
-                    window.localStorage.setItem(LEARNING_PROGRESS_KEY, JSON.stringify(DEMO_LEARNING_PROGRESS));
-                }
-                setDemoAuthSession("admin");
-                navigate("/courses");
-            } catch {
-                setError("We couldn't save your sign-in on this device.");
-            }
+        if (!isSupabaseConfigured || !supabase) {
+            setError("Supabase is not configured. Please contact the site administrator.");
             return;
         }
 
-        if (!supabase) {
-            setError("Supabase is unavailable.");
-            return;
-        }
         const { error: signInError } = await supabase.auth.signInWithPassword({
             email: email.trim(),
             password,

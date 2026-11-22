@@ -38,7 +38,35 @@ Restart `npm run dev` after changing environment variables.
 - `submit_exam(exam_id, answers)` validates answers and returns the server-calculated score.
 - A passing final exam changes the enrolment to `completed` and creates a certificate.
 
-## 4. RLS summary
+## 4. Course content
+
+The application reads the published catalogue from `courses`, preview details and topic titles from `course_overviews`, and enrolled lesson materials from `course_modules`. Progress and exam results are read from the signed-in student's Supabase records; the browser is not a course-data store.
+
+Add and publish course content in Supabase. Each `course_modules` row represents one topic; `content` holds the lesson text and `image_url` is an optional topic image. Keep the public syllabus in sync with those module positions and titles. For example:
+
+```sql
+update public.course_modules
+set content = 'Instructor-authored lesson text.',
+    image_url = 'https://YOUR_PUBLIC_IMAGE_URL'
+where course_id = 'python' and position = 1;
+
+update public.course_overviews
+set summary = 'Course overview shown before enrolment.',
+    outcomes = '["Outcome one", "Outcome two"]'::jsonb,
+    syllabus = (
+        select coalesce(
+            jsonb_agg(jsonb_build_object('position', position, 'title', title) order by position),
+            '[]'::jsonb
+        )
+        from public.course_modules
+        where course_id = 'python'
+    )
+where course_id = 'python';
+```
+
+Use publicly accessible image URLs. Module content remains protected by enrolment RLS; the syllabus and overview remain available to visitors previewing a course. Missing lesson text is shown as an explicit empty state rather than replaced with browser-side sample content.
+
+## 5. RLS summary
 
 - Users can read/update only their profile.
 - Users can read only their enrolments, progress, attempts, and certificates.
@@ -47,9 +75,8 @@ Restart `npm run dev` after changing environment variables.
 - Direct lesson, exam, enrolment, and certificate writes are prevented from client tables.
 - Learning actions are performed through `SECURITY DEFINER` RPC functions with explicit user checks.
 
-## 5. Production notes
+## 6. Production notes
 
-- The frontend will continue to work with browser demo data when Supabase variables are absent.
-- With Supabase configured, registration and login use Supabase Auth.
-- Replace the seed's demo questions and static module content with instructor-authored content before launch.
+- Supabase configuration is required for login, course loading, enrolment, and learning progress.
+- Replace the seed exam questions with instructor-authored questions before launch.
 - Configure email confirmation and redirects in Supabase Authentication settings for production.

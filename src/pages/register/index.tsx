@@ -53,14 +53,8 @@ const Register = () => {
         setSubmitError("");
         setSubmitting(true);
 
-        if (!isSupabaseConfigured) {
-            alert("Registration Successful!");
-            setSubmitting(false);
-            navigate("/login");
-            return;
-        }
-        if (!supabase) {
-            setSubmitError("Supabase is unavailable.");
+        if (!isSupabaseConfigured || !supabase) {
+            setSubmitError("Supabase is not configured. Please contact the site administrator.");
             setSubmitting(false);
             return;
         }

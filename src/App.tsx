@@ -44,11 +44,11 @@ function App() {
           <Route path="/kidAcademy" element={<KidsAcademy />} />
           <Route path="/courses" element={isSignedIn() ? <Courses /> : <Navigate to="/login" replace />} />
           <Route
-            path="/courses/:courseId/overview"
+            path="/courses/:courseSlug/overview"
             element={isSignedIn() ? <Courses /> : <Navigate to="/login" replace />}
           />
           <Route
-            path="/courses/:courseId/:lessonNumber?"
+            path="/courses/:courseSlug/:lessonNumber?"
             element={isSignedIn() ? <Courses /> : <Navigate to="/login" replace />}
           />
 

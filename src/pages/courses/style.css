@@ -31,6 +31,31 @@
     width: min(1440px, 100%);
 }
 
+.learning-loading {
+    display: grid;
+    min-height: 240px;
+    place-items: center;
+    align-content: center;
+    gap: 12px;
+    color: var(--learning-muted);
+    font-size: 13px;
+}
+
+.learning-loading span {
+    width: 34px;
+    height: 34px;
+    border: 3px solid #dce9df;
+    border-top-color: var(--learning-green);
+    border-radius: 50%;
+    animation: learning-spin 700ms linear infinite;
+}
+
+@keyframes learning-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .learning-welcome,
 .learning-section-heading {
     display: flex;

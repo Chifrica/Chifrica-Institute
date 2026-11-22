@@ -24,3 +24,28 @@ export async function getCurrentUserId() {
     }
     return window.localStorage.getItem(AUTH_USER_KEY);
 }
+
+export async function getCurrentProfileName() {
+    if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        const user = data.session?.user;
+        if (!user) {
+            return "User";
+        }
+
+        const metadataName = user.user_metadata?.full_name?.trim();
+        if (metadataName) {
+            return metadataName;
+        }
+
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", user.id)
+            .maybeSingle();
+
+        return profile?.full_name?.trim() || user.email?.split("@")[0] || "User";
+    }
+
+    return "Admin";
+}

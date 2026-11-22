@@ -1,89 +1,36 @@
 import { useEffect, useState } from "react";
 import { FiArrowLeft, FiArrowRight, FiAward, FiBookOpen, FiCheckCircle, FiClock, FiUser, FiX } from "react-icons/fi";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { courses, LEARNING_PROGRESS_KEY, type Course, type LearningProgress } from "../../data/courses";
+import { type Course, type CourseModule, type CourseOverview, type LearningProgress } from "../../data/courses";
 import { supabase } from "../../lib/supabase";
 import {
     completeLesson,
     enrollInCourse,
     fetchAllLessonProgress,
+    fetchCourseModules,
+    fetchCourseOverviews,
+    fetchPublishedCourses,
     fetchExam,
     submitExam,
     fetchPassedExamKeys,
     fetchEnrollments,
     type Exam,
 } from "../../services/learning";
-import { getCurrentUserId } from "../../auth";
+import { getCurrentProfileName, getCurrentUserId } from "../../auth";
 import "./style.css";
 
-function readProgress(): LearningProgress {
-    const savedProgress = window.localStorage.getItem(LEARNING_PROGRESS_KEY);
-    if (!savedProgress) {
-        return {};
-    }
-
-    try {
-        const parsed: unknown = JSON.parse(savedProgress);
-        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-            throw new Error("Saved course progress has an unexpected format.");
-        }
-
-        return Object.fromEntries(
-            Object.entries(parsed).filter(
-                (entry): entry is [string, string[]] =>
-                    Array.isArray(entry[1]) && entry[1].every((lessonId) => typeof lessonId === "string"),
-            ),
-        );
-    } catch (error) {
-        console.error("Unable to read saved course progress.", error);
-        return {};
-    }
-}
-
-function getCompletedLessons(course: Course, progress: LearningProgress) {
-    const completedIds = new Set(progress[course.id] ?? []);
-    return course.lessons.filter((_, index) => completedIds.has(`lesson-${index + 1}`)).length;
-}
-
-function getLessonExample(courseId: string) {
-    switch (courseId) {
-        case "react-native":
-            return "const styles = StyleSheet.create({\n  screen: { flex: 1, padding: 16 },\n});";
-        case "frontend-development":
-            return "<main>\n  <h1>Welcome</h1>\n  <p>Build a clear page structure.</p>\n</main>";
-        case "html-css":
-            return '<main class="page">\n  <h1>Welcome</h1>\n</main>';
-        case "javascript-essentials":
-            return 'const isComplete = true;\nif (isComplete) {\n  console.log("Well done");\n}';
-        case "python":
-            return 'for topic in topics:\n    print(topic)';
-        default:
-            return "User need  →  clear action  →  helpful feedback";
-    }
-}
-
-function getLessonExplanation(courseId: string, lesson: string) {
-    const topic = lesson.toLowerCase();
-    switch (courseId) {
-        case "react-native":
-            return `React Native combines reusable React components with native mobile controls. In ${topic}, focus on how this concept affects the screen, then test the result on a small device-sized layout.`;
-        case "frontend-development":
-            return `A web page combines meaningful HTML, visual CSS, and interactive JavaScript. In ${topic}, consider how each layer contributes to a page that is clear, responsive, and usable.`;
-        case "html-css":
-            return `HTML gives page content structure and meaning; CSS controls how that content is presented. In ${topic}, build on semantic markup and check that the result remains readable at different screen sizes.`;
-        case "javascript-essentials":
-            return `JavaScript adds logic and interaction to a page. In ${topic}, work with small inputs and outputs first, then check how the browser responds when the values or user actions change.`;
-        case "python":
-            return `Python uses readable, structured instructions to work with data and solve problems. In ${topic}, break the task into simple steps and run a small example to verify each result.`;
-        default:
-            return `Good user experiences begin with a clear understanding of what people need to do. In ${topic}, consider how layout, visual hierarchy, and feedback can make that task easier.`;
-    }
-}
+const getCourseSlug = (title: string) =>
+    title.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 const Courses = () => {
-    const [progress, setProgress] = useState<LearningProgress>(readProgress);
-    const [storageError, setStorageError] = useState("");
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [courseOverviews, setCourseOverviews] = useState<Record<string, CourseOverview>>({});
+    const [courseModules, setCourseModules] = useState<CourseModule[]>([]);
+    const [progress, setProgress] = useState<LearningProgress>({});
+    const [completedCourseIds, setCompletedCourseIds] = useState<Set<string>>(new Set());
     const [serverError, setServerError] = useState("");
+    const [catalogError, setCatalogError] = useState("");
+    const [overviewError, setOverviewError] = useState("");
     const [exam, setExam] = useState<Exam | null>(null);
     const [examOpen, setExamOpen] = useState(false);
     const [examAnswers, setExamAnswers] = useState<Record<string, number>>({});
@@ -91,119 +38,212 @@ const Courses = () => {
     const [examSubmitting, setExamSubmitting] = useState(false);
     const [passedExams, setPassedExams] = useState<Set<string>>(new Set());
     const [activeExamKind, setActiveExamKind] = useState<"checkpoint" | "final">("checkpoint");
-    const { courseId, lessonNumber } = useParams<{ courseId: string; lessonNumber?: string }>();
+    const [displayName, setDisplayName] = useState("Student");
+    const [catalogLoading, setCatalogLoading] = useState(true);
+    const [learningLoading, setLearningLoading] = useState(true);
+    const [loadedModulesCourseId, setLoadedModulesCourseId] = useState<string | null>(null);
+    const [enrolling, setEnrolling] = useState(false);
+    const { courseSlug, lessonNumber } = useParams<{ courseSlug: string; lessonNumber?: string }>();
     const navigate = useNavigate();
 
     useEffect(() => {
-        try {
-            window.localStorage.setItem(LEARNING_PROGRESS_KEY, JSON.stringify(progress));
-        } catch (error) {
-            console.error("Unable to save course progress.", error);
-            queueMicrotask(() => {
-                setStorageError("Your progress could not be saved on this device. Check your browser storage settings.");
-            });
-        }
-    }, [progress]);
-
-    useEffect(() => {
-        if (!supabase) {
-            return;
-        }
-
         let cancelled = false;
-        const syncServerProgress = async () => {
+        const loadCatalog = async () => {
             try {
-                const userId = await getCurrentUserId();
-                if (!userId || cancelled) {
+                if (!supabase) {
+                    throw new Error("Supabase is not configured. Course data cannot be loaded.");
+                }
+                const publishedCourses = await fetchPublishedCourses();
+                if (cancelled) {
                     return;
                 }
-                const serverProgress = await fetchAllLessonProgress(userId);
-                const enrollments = await fetchEnrollments(userId);
-                if (!cancelled) {
-                    const enrollmentProgress = enrollments.reduce<LearningProgress>((result, enrollment) => {
-                        result[enrollment.course_id] = serverProgress[enrollment.course_id] ?? [];
-                        return result;
-                    }, {});
-                    setProgress((current) => ({ ...serverProgress, ...enrollmentProgress, ...current }));
-                }
-                const passedExamKeys = await fetchPassedExamKeys();
-                if (!cancelled) {
-                    setPassedExams(new Set(passedExamKeys));
+                setCourses(publishedCourses);
+
+                try {
+                    const overviews = await fetchCourseOverviews();
+                    if (!cancelled) {
+                        setCourseOverviews(Object.fromEntries(overviews.map((overview) => [overview.course_id, overview])));
+                    }
+                } catch (error) {
+                    console.error("Unable to load course overviews.", error);
+                    if (!cancelled) {
+                        setOverviewError(error instanceof Error ? error.message : "Course previews could not be loaded.");
+                    }
                 }
             } catch (error) {
-                console.error("Unable to load learning progress.", error);
+                console.error("Unable to load course catalogue.", error);
                 if (!cancelled) {
-                    setServerError("Live course progress could not be loaded. Local demo progress is still available.");
+                    setCatalogError(error instanceof Error ? error.message : "Course data could not be loaded from Supabase.");
+                }
+            } finally {
+                if (!cancelled) {
+                    setCatalogLoading(false);
                 }
             }
         };
 
-        void syncServerProgress();
+        void loadCatalog();
         return () => {
             cancelled = true;
         };
     }, []);
 
-    const enrolledCourses = courses.filter((course) =>
-        Object.prototype.hasOwnProperty.call(progress, course.id),
+    useEffect(() => {
+        let cancelled = false;
+        const loadStudentLearning = async () => {
+            try {
+                if (!supabase) {
+                    throw new Error("Supabase is not configured. Learning data cannot be loaded.");
+                }
+                const [profileName, userId] = await Promise.all([
+                    getCurrentProfileName(),
+                    getCurrentUserId(),
+                ]);
+                if (!userId) {
+                    throw new Error("Your session has expired. Please sign in again.");
+                }
+                const [serverProgress, enrollments, passedExamKeys] = await Promise.all([
+                    fetchAllLessonProgress(userId),
+                    fetchEnrollments(userId),
+                    fetchPassedExamKeys(),
+                ]);
+                if (!cancelled) {
+                    const enrollmentProgress = enrollments.reduce<LearningProgress>((result, enrollment) => {
+                        result[enrollment.course_id] = serverProgress[enrollment.course_id] ?? [];
+                        return result;
+                    }, {});
+                    setDisplayName(profileName);
+                    setProgress(enrollmentProgress);
+                    setCompletedCourseIds(new Set(
+                        enrollments.filter((enrollment) => enrollment.status === "completed").map((enrollment) => enrollment.course_id),
+                    ));
+                    setPassedExams(new Set(passedExamKeys));
+                }
+            } catch (error) {
+                console.error("Unable to load learning progress.", error);
+                if (!cancelled) {
+                    setServerError(error instanceof Error ? error.message : "Learning data could not be loaded from Supabase.");
+                }
+            } finally {
+                if (!cancelled) {
+                    setLearningLoading(false);
+                }
+            }
+        };
+
+        void loadStudentLearning();
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const activeCourse = courses.find(
+        (course) => course.id === courseSlug || getCourseSlug(course.title) === courseSlug,
     );
-    const completedCourses = enrolledCourses.filter(
-        (course) => getCompletedLessons(course, progress) === course.lessons.length,
-    );
-    const inProgressCourses = enrolledCourses.filter((course) => {
-        const completedLessons = getCompletedLessons(course, progress);
-        return completedLessons > 0 && completedLessons < course.lessons.length;
-    });
-    const currentCourses = enrolledCourses.filter(
-        (course) => getCompletedLessons(course, progress) < course.lessons.length,
-    );
-    const availableCourses = courses.filter(
-        (course) => !Object.prototype.hasOwnProperty.call(progress, course.id),
-    );
-    const activeCourse = courses.find((course) => course.id === courseId);
     const isCourseOverview = lessonNumber === "overview";
     const isCourseEnrolled = Boolean(
         activeCourse && Object.prototype.hasOwnProperty.call(progress, activeCourse.id),
     );
+    const getModuleCount = (course: Course) => courseOverviews[course.id]?.syllabus.length ?? 0;
+    const getCompletedLessons = (course: Course) => {
+        const completedIds = new Set(progress[course.id] ?? []);
+        return Array.from({ length: getModuleCount(course) }, (_, index) =>
+            completedIds.has(`lesson-${index + 1}`),
+        ).filter(Boolean).length;
+    };
+    const enrolledCourses = courses.filter((course) =>
+        Object.prototype.hasOwnProperty.call(progress, course.id),
+    );
+    const completedCourses = enrolledCourses.filter((course) => completedCourseIds.has(course.id));
+    const currentCourses = enrolledCourses.filter((course) => !completedCourseIds.has(course.id));
+    const inProgressCourses = currentCourses.filter((course) => getCompletedLessons(course) > 0);
+    const availableCourses = courses.filter(
+        (course) => !Object.prototype.hasOwnProperty.call(progress, course.id),
+    );
+    const activeOverview = activeCourse ? courseOverviews[activeCourse.id] : undefined;
+    const moduleCount = activeCourse ? getModuleCount(activeCourse) : 0;
     const requestedLessonIndex = Number(lessonNumber) - 1;
     const firstIncompleteLessonIndex = activeCourse
-        ? activeCourse.lessons.findIndex((_, index) => !(progress[activeCourse.id] ?? []).includes(`lesson-${index + 1}`))
+        ? Array.from({ length: moduleCount }, (_, index) => index)
+            .findIndex((index) => !(progress[activeCourse.id] ?? []).includes(`lesson-${index + 1}`))
         : -1;
     const activeLessonIndex = activeCourse
-        ? lessonNumber && Number.isInteger(requestedLessonIndex) && requestedLessonIndex >= 0 && requestedLessonIndex < activeCourse.lessons.length
+        ? lessonNumber && Number.isInteger(requestedLessonIndex) && requestedLessonIndex >= 0 && requestedLessonIndex < moduleCount
             ? firstIncompleteLessonIndex >= 0
                 ? Math.min(requestedLessonIndex, firstIncompleteLessonIndex)
                 : requestedLessonIndex
             : firstIncompleteLessonIndex >= 0 ? firstIncompleteLessonIndex : 0
         : 0;
+    const activeModule = courseModules.find(
+        (module) => module.course_id === activeCourse?.id && module.position === activeLessonIndex + 1,
+    );
     const completedLessonIds = activeCourse ? new Set(progress[activeCourse.id] ?? []) : new Set<string>();
     const isActiveLessonComplete = Boolean(activeCourse && completedLessonIds.has(`lesson-${activeLessonIndex + 1}`));
 
-    const enroll = (courseId: string) => {
-        setProgress((current) => ({ ...current, [courseId]: [] }));
-        navigate(`/courses/${courseId}/1`);
-        if (supabase) {
-            void enrollInCourse(courseId).catch((error) => {
-                console.error("Unable to enrol in course.", error);
-                setServerError("Enrolment could not be saved. Please try again.");
+    useEffect(() => {
+        if (!courseSlug || learningLoading || !activeCourse || isCourseOverview || !isCourseEnrolled) {
+            return;
+        }
+
+        let cancelled = false;
+        void fetchCourseModules(activeCourse.id)
+            .then((modules) => {
+                if (!cancelled) {
+                    setCourseModules(modules);
+                }
+            })
+            .catch((error: unknown) => {
+                console.error("Unable to load course modules.", error);
+                if (!cancelled) {
+                    setServerError(error instanceof Error ? error.message : "Course modules could not be loaded.");
+                }
+            })
+            .finally(() => {
+                if (!cancelled) {
+                    setLoadedModulesCourseId(activeCourse.id);
+                }
             });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [courseSlug, learningLoading, activeCourse, isCourseOverview, isCourseEnrolled]);
+
+    const enroll = async (targetCourseId: string) => {
+        setEnrolling(true);
+        setServerError("");
+        try {
+            await enrollInCourse(targetCourseId);
+            setProgress((current) => ({ ...current, [targetCourseId]: [] }));
+            const course = courses.find((item) => item.id === targetCourseId);
+            if (!course) {
+                throw new Error("The selected course is no longer available.");
+            }
+            navigate(`/courses/${getCourseSlug(course.title)}/1`);
+        } catch (error) {
+            console.error("Unable to enrol in course.", error);
+            setServerError(error instanceof Error ? error.message : "Enrolment could not be saved.");
+        } finally {
+            setEnrolling(false);
         }
     };
 
     const openCourse = (course: Course) => {
         const doneLessons = new Set(progress[course.id] ?? []);
-        const firstIncomplete = course.lessons.findIndex((_, index) => !doneLessons.has(`lesson-${index + 1}`));
-        navigate(`/courses/${course.id}/${firstIncomplete < 0 ? 1 : firstIncomplete + 1}`);
+        const firstIncomplete = Array.from({ length: getModuleCount(course) }, (_, index) =>
+            !doneLessons.has(`lesson-${index + 1}`),
+        ).findIndex(Boolean);
+        navigate(`/courses/${getCourseSlug(course.title)}/${firstIncomplete < 0 ? 1 : firstIncomplete + 1}`);
     };
 
     const openLesson = (index: number) => {
         if (activeCourse) {
-            navigate(`/courses/${activeCourse.id}/${index + 1}`);
+            navigate(`/courses/${getCourseSlug(activeCourse.title)}/${index + 1}`);
         }
     };
 
     const openCourseOverview = (course: Course) => {
-        navigate(`/courses/${course.id}/overview`);
+        navigate(`/courses/${getCourseSlug(course.title)}/overview`);
     };
 
     const completeActiveLesson = () => {
@@ -211,21 +251,17 @@ const Courses = () => {
             return;
         }
 
-        const lessonId = `lesson-${activeLessonIndex + 1}`;
-        setProgress((current) => ({
-            ...current,
-            [activeCourse.id]: [...new Set([...(current[activeCourse.id] ?? []), lessonId])],
-        }));
-        if (supabase) {
-            void completeLesson(activeCourse.id, activeLessonIndex + 1).catch((error) => {
-                console.error("Unable to save lesson completion.", error);
-                setServerError(error instanceof Error ? error.message : "Lesson completion could not be saved.");
+        void completeLesson(activeCourse.id, activeLessonIndex + 1)
+            .then(() => {
                 setProgress((current) => ({
                     ...current,
-                    [activeCourse.id]: (current[activeCourse.id] ?? []).filter((id) => id !== lessonId),
+                    [activeCourse.id]: [...new Set([...(current[activeCourse.id] ?? []), `lesson-${activeLessonIndex + 1}`])],
                 }));
+            })
+            .catch((error: unknown) => {
+                console.error("Unable to save lesson completion.", error);
+                setServerError(error instanceof Error ? error.message : "Lesson completion could not be saved.");
             });
-        }
     };
 
     const openExam = async (kind: "checkpoint" | "final") => {
@@ -237,34 +273,6 @@ const Courses = () => {
         setExamAnswers({});
         setExamResult(null);
         setExamOpen(true);
-
-        if (!supabase) {
-            setExam({
-                id: "",
-                title: kind === "final"
-                    ? `${activeCourse.title} - Final Exam`
-                    : `${activeCourse.title} - Checkpoint Exam`,
-                passing_score: 70,
-                questions: [
-                    {
-                        id: "demo-1",
-                        prompt: "What is the best way to confirm that you understand a topic?",
-                        options: ["Practise and explain it", "Skip the examples", "Read the heading only"],
-                    },
-                    {
-                        id: "demo-2",
-                        prompt: "When a practical example fails, what should you do?",
-                        options: ["Ignore the result", "Review each step and debug", "Stop learning"],
-                    },
-                    {
-                        id: "demo-3",
-                        prompt: "Why are course assessments included?",
-                        options: ["To verify understanding", "To reset progress", "To remove course modules"],
-                    },
-                ],
-            });
-            return;
-        }
 
         try {
             const loadedExam = await fetchExam(
@@ -299,34 +307,15 @@ const Courses = () => {
         setExamSubmitting(true);
         setServerError("");
         try {
-            if (!supabase || !exam.id) {
-                const correctAnswers: Record<string, number> = {
-                    "demo-1": 0,
-                    "demo-2": 1,
-                    "demo-3": 0,
-                };
-                const correctCount = exam.questions.filter(
-                    (question) => examAnswers[question.id] === correctAnswers[question.id],
-                ).length;
-                const score = exam.questions.length
-                    ? Math.round(correctCount * 100 / exam.questions.length)
-                    : 0;
-                const result = { passed: score >= exam.passing_score, score };
-                setExamResult(result);
-                if (result.passed && activeCourse) {
-                    const key = activeExamKind === "final"
-                        ? `${activeCourse.id}:final`
-                        : `${activeCourse.id}:checkpoint:${activeLessonIndex + 1}`;
-                    setPassedExams((current) => new Set(current).add(key));
-                }
-            } else {
-                const result = await submitExam(exam.id, examAnswers);
-                setExamResult(result);
-                if (result.passed && activeCourse) {
-                    const key = activeExamKind === "final"
-                        ? `${activeCourse.id}:final`
-                        : `${activeCourse.id}:checkpoint:${activeLessonIndex + 1}`;
-                    setPassedExams((current) => new Set(current).add(key));
+            const result = await submitExam(exam.id, examAnswers);
+            setExamResult(result);
+            if (result.passed && activeCourse) {
+                const key = activeExamKind === "final"
+                    ? `${activeCourse.id}:final`
+                    : `${activeCourse.id}:checkpoint:${activeLessonIndex + 1}`;
+                setPassedExams((current) => new Set(current).add(key));
+                if (activeExamKind === "final") {
+                    setCompletedCourseIds((current) => new Set(current).add(activeCourse.id));
                 }
             }
         } catch (error) {
@@ -338,9 +327,10 @@ const Courses = () => {
     };
 
     const renderCourseCard = (course: Course, featured = false) => {
-        const completedLessons = getCompletedLessons(course, progress);
-        const percentage = Math.round((completedLessons / course.lessons.length) * 100);
-        const isComplete = percentage === 100;
+        const lessonCount = getModuleCount(course);
+        const completedLessons = getCompletedLessons(course);
+        const percentage = lessonCount ? Math.round((completedLessons / lessonCount) * 100) : 0;
+        const isComplete = lessonCount > 0 && percentage === 100;
 
         return (
             <article className={`learning-course-card${featured ? " learning-course-card--featured" : ""}`} key={course.id}>
@@ -361,7 +351,7 @@ const Courses = () => {
                     <p className="learning-course-description">{course.description}</p>
                     <div className="learning-course-meta">
                         <span><FiUser aria-hidden="true" /> {course.instructor}</span>
-                        <span><FiBookOpen aria-hidden="true" /> {course.lessons.length} lessons</span>
+                        <span><FiBookOpen aria-hidden="true" /> {lessonCount} lessons</span>
                     </div>
 
                     {isComplete ? (
@@ -386,7 +376,7 @@ const Courses = () => {
                                 <span style={{ width: `${percentage}%` }} />
                             </div>
                             <p className="learning-lesson-count">
-                                {completedLessons} of {course.lessons.length} lessons completed
+                                {completedLessons} of {lessonCount} lessons completed
                             </p>
                         </>
                     )}
@@ -422,12 +412,13 @@ const Courses = () => {
 
             <div className="learning-reader-layout">
                 <nav className="learning-module-list" aria-label="Course topics">
-                    <p className="learning-module-list-heading">Topics <span>{course.lessons.length}</span></p>
-                    {course.lessons.map((lesson, index) => {
+                    <p className="learning-module-list-heading">Topics <span>{moduleCount}</span></p>
+                    {Array.from({ length: moduleCount }, (_, index) => {
+                        const lesson = activeOverview?.syllabus[index]?.title ?? `Module ${index + 1}`;
                         const isComplete = completedLessonIds.has(`lesson-${index + 1}`);
-                        const firstIncomplete = course.lessons.findIndex(
-                            (_, lessonIndex) => !completedLessonIds.has(`lesson-${lessonIndex + 1}`),
-                        );
+                        const firstIncomplete = Array.from({ length: moduleCount }, (__, lessonIndex) =>
+                            !completedLessonIds.has(`lesson-${lessonIndex + 1}`),
+                        ).findIndex(Boolean);
                         const isLocked = firstIncomplete >= 0 && index > firstIncomplete;
                         return (
                             <button
@@ -449,27 +440,23 @@ const Courses = () => {
                 <article className="learning-topic">
                     <div className="learning-topic-heading">
                         <p className="learning-eyebrow">
-                            Topic {activeLessonIndex + 1} of {course.lessons.length}
+                            Topic {activeLessonIndex + 1} of {moduleCount}
                         </p>
-                        <h1 id="learning-topic-title">{course.lessons[activeLessonIndex]}</h1>
+                        <h1 id="learning-topic-title">{activeModule?.title ?? activeOverview?.syllabus[activeLessonIndex]?.title}</h1>
                     </div>
                     <figure className="learning-topic-visual">
-                        <img src={course.image} alt={`${course.title} course visual`} />
+                        <img src={activeModule?.image_url || course.image} alt={`${course.title} course visual`} />
                         <figcaption>{course.title} · {course.instructor}</figcaption>
                     </figure>
 
                     <div className="learning-topic-content">
-                        <p>{getLessonExplanation(course.id, course.lessons[activeLessonIndex])}</p>
-                        <h2>Put it into practice</h2>
-                        <p>
-                            Start with one clear goal, break the work into manageable steps, and check the result as you go.
-                            Revisit earlier topics whenever you need a refresher.
-                        </p>
-                        <pre className="learning-topic-example"><code>{getLessonExample(course.id)}</code></pre>
-                        <aside className="learning-topic-tip">
-                            <strong>Key takeaway</strong>
-                            <p>Understand the purpose first, practise the concept, and review your result before moving on.</p>
-                        </aside>
+                        {loadedModulesCourseId !== course.id ? (
+                            <p role="status">Loading module content...</p>
+                        ) : activeModule?.content ? (
+                            <p>{activeModule.content}</p>
+                        ) : (
+                            <p role="status">Learning content for this module has not been added yet.</p>
+                        )}
                     </div>
 
                     <div className="learning-question">
@@ -554,7 +541,7 @@ const Courses = () => {
                                 </button>
                             )}
                             {isActiveLessonComplete
-                                && ((activeLessonIndex + 1) % 2 === 0 && activeLessonIndex + 1 < course.lessons.length)
+                                && ((activeLessonIndex + 1) % 2 === 0 && activeLessonIndex + 1 < moduleCount)
                                 && !passedExams.has(`${course.id}:checkpoint:${activeLessonIndex + 1}`)
                                 && (
                                     <button
@@ -566,7 +553,7 @@ const Courses = () => {
                                     </button>
                                 )}
                             {isActiveLessonComplete
-                                && activeLessonIndex === course.lessons.length - 1
+                                && activeLessonIndex === moduleCount - 1
                                 && !passedExams.has(`${course.id}:final`)
                                 && (
                                     <button
@@ -582,7 +569,7 @@ const Courses = () => {
                                 type="button"
                                 disabled={
                                     !isActiveLessonComplete
-                                    || activeLessonIndex === course.lessons.length - 1
+                                    || activeLessonIndex === moduleCount - 1
                                     || (
                                         (activeLessonIndex + 1) % 2 === 0
                                         && !passedExams.has(`${course.id}:checkpoint:${activeLessonIndex + 1}`)
@@ -590,8 +577,8 @@ const Courses = () => {
                                 }
                                 onClick={() => openLesson(activeLessonIndex + 1)}
                             >
-                                {activeLessonIndex === course.lessons.length - 1 ? "Course complete" : "Next topic"}
-                                {activeLessonIndex < course.lessons.length - 1 && <FiArrowRight aria-hidden="true" />}
+                                {activeLessonIndex === moduleCount - 1 ? "Course complete" : "Next topic"}
+                                {activeLessonIndex < moduleCount - 1 && <FiArrowRight aria-hidden="true" />}
                             </button>
                         </div>
                     </div>
@@ -600,14 +587,47 @@ const Courses = () => {
         </section>
     );
 
-    if (courseId) {
+    if (courseSlug) {
+        if (catalogLoading) {
+            return (
+                <div className="learning-dashboard learning-dashboard--reader">
+                    <div className="learning-dashboard-inner">
+                        <div className="learning-loading" role="status" aria-live="polite">
+                            <span /><p>Loading course preview...</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         if (!activeCourse) {
-            return <Navigate to="/courses" replace />;
+            return (
+                <div className="learning-dashboard learning-dashboard--reader">
+                    <div className="learning-dashboard-inner">
+                        <p className="learning-storage-error" role="alert">
+                            {catalogError || "This course could not be found in the published course catalogue."}
+                        </p>
+                        <button className="learning-secondary-button" type="button" onClick={() => navigate("/courses")}>
+                            Return to My Learning
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        const canonicalCourseSlug = getCourseSlug(activeCourse.title);
+        if (courseSlug !== canonicalCourseSlug) {
+            return (
+                <Navigate
+                    to={`/courses/${canonicalCourseSlug}/${lessonNumber ?? "1"}`}
+                    replace
+                />
+            );
         }
 
         if (isCourseOverview) {
-            if (isCourseEnrolled) {
-                return <Navigate to={`/courses/${activeCourse.id}/1`} replace />;
+            if (!learningLoading && isCourseEnrolled) {
+                return <Navigate to={`/courses/${canonicalCourseSlug}/1`} replace />;
             }
 
             return (
@@ -634,17 +654,24 @@ const Courses = () => {
                                 <div className="learning-overview-details">
                                     <p className="learning-eyebrow">{activeCourse.difficulty} · {activeCourse.duration}</p>
                                     <h1 id="course-overview-title">{activeCourse.title}</h1>
-                                    <p className="learning-overview-description">{activeCourse.description}</p>
+                                    <p className="learning-overview-description">{activeOverview?.summary ?? activeCourse.description}</p>
                                     <div className="learning-course-meta">
                                         <span><FiUser aria-hidden="true" /> {activeCourse.instructor}</span>
-                                        <span><FiBookOpen aria-hidden="true" /> {activeCourse.lessons.length} modules</span>
+                                        <span><FiBookOpen aria-hidden="true" /> {activeOverview?.syllabus.length ?? 0} modules</span>
                                     </div>
+                                    {!!activeOverview?.outcomes.length && (
+                                        <ul className="learning-overview-outcomes">
+                                            {activeOverview.outcomes.map((outcome) => <li key={outcome}>{outcome}</li>)}
+                                        </ul>
+                                    )}
+                                    {overviewError && <p className="learning-storage-error" role="alert">{overviewError}</p>}
                                     <button
                                         className="learning-primary-button"
                                         type="button"
-                                        onClick={() => enroll(activeCourse.id)}
+                                        disabled={enrolling || learningLoading}
+                                        onClick={() => void enroll(activeCourse.id)}
                                     >
-                                        Enrol and start learning
+                                        {learningLoading ? "Loading your learning status..." : enrolling ? "Enrolling..." : "Enrol and start learning"}
                                         <FiArrowRight aria-hidden="true" />
                                     </button>
                                 </div>
@@ -656,14 +683,18 @@ const Courses = () => {
                                     <h2>Modules covered</h2>
                                     <p>Preview the topics included. Enrol to unlock the full lessons and learning materials.</p>
                                 </div>
-                                <ol>
-                                    {activeCourse.lessons.map((lesson, index) => (
-                                        <li key={lesson}>
-                                            <span>{String(index + 1).padStart(2, "0")}</span>
-                                            <strong>{lesson}</strong>
+                                {activeOverview?.syllabus.length ? <ol>
+                                    {activeOverview.syllabus.map((module) => (
+                                        <li key={module.position}>
+                                            <span>{String(module.position).padStart(2, "0")}</span>
+                                            <strong>{module.title}</strong>
                                         </li>
                                     ))}
-                                </ol>
+                                </ol> : (
+                                    <p className="learning-section-empty" role={overviewError ? "alert" : undefined}>
+                                        {overviewError || "The course outline is not available yet."}
+                                    </p>
+                                )}
                             </div>
                         </section>
                     </div>
@@ -671,19 +702,40 @@ const Courses = () => {
             );
         }
 
+        if (learningLoading) {
+            return (
+                <div className="learning-dashboard learning-dashboard--reader">
+                    <div className="learning-dashboard-inner">
+                        <div className="learning-loading" role="status" aria-live="polite">
+                            <span /><p>Loading your course...</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         if (!isCourseEnrolled) {
-            return <Navigate to={`/courses/${activeCourse.id}/overview`} replace />;
+            return <Navigate to={`/courses/${canonicalCourseSlug}/overview`} replace />;
         }
 
         return (
             <div className="learning-dashboard learning-dashboard--reader">
                 <div className="learning-dashboard-inner">
-                    {(storageError || serverError) && (
-                        <p className="learning-storage-error" role="alert">
-                            {serverError || storageError}
-                        </p>
-                    )}
+                    {serverError && <p className="learning-storage-error" role="alert">{serverError}</p>}
                     {renderCourseReader(activeCourse)}
+                </div>
+            </div>
+        );
+    }
+
+    if (learningLoading) {
+        return (
+            <div className="learning-dashboard">
+                <div className="learning-dashboard-inner">
+                    <div className="learning-loading" role="status" aria-live="polite">
+                        <span />
+                        <p>Loading your learning dashboard...</p>
+                    </div>
                 </div>
             </div>
         );
@@ -696,11 +748,10 @@ const Courses = () => {
                     <div>
                         <p className="learning-eyebrow">Student dashboard</p>
                         <h1>My Learning</h1>
-                        <p className="learning-welcome-copy">Welcome back! Continue learning where you stopped.</p>
+                        <p className="learning-welcome-copy">Welcome {displayName}! Continue learning where you stopped.</p>
                     </div>
                 </header>
 
-                {storageError && <p className="learning-storage-error" role="alert">{storageError}</p>}
                 {serverError && <p className="learning-storage-error" role="alert">{serverError}</p>}
 
                 <section className="learning-stats" aria-label="Learning summary">
@@ -800,7 +851,7 @@ const Courses = () => {
                                         <p className="learning-course-description">{course.description}</p>
                                         <div className="learning-explore-meta">
                                             <span><FiUser aria-hidden="true" /> {course.instructor}</span>
-                                            <span><FiBookOpen aria-hidden="true" /> {course.lessons.length} lessons</span>
+                                            <span><FiBookOpen aria-hidden="true" /> {getModuleCount(course)} lessons</span>
                                         </div>
                                         <button className="learning-secondary-button" type="button" onClick={() => openCourseOverview(course)}>
                                             View course

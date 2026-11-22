@@ -1,10 +1,85 @@
 import { supabase } from "../lib/supabase";
-import type { LearningProgress } from "../data/courses";
+import type { Course, CourseModule, CourseOverview, LearningProgress } from "../data/courses";
 
 export type ServerEnrollment = {
     course_id: string;
     status: "enrolled" | "in_progress" | "completed";
 };
+
+export async function fetchPublishedCourses(): Promise<Course[]> {
+    if (!supabase) {
+        throw new Error("Supabase is not configured.");
+    }
+
+    const { data, error } = await supabase
+        .from("courses")
+        .select("id,title,description,instructor_name,duration,difficulty,thumbnail_url")
+        .eq("published", true)
+        .order("title");
+
+    if (error) {
+        throw error;
+    }
+
+    return (data ?? []).map((row) => ({
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        instructor: row.instructor_name,
+        duration: row.duration,
+        difficulty: row.difficulty,
+        image: row.thumbnail_url ?? "",
+    }));
+}
+
+export async function fetchCourseOverviews(courseIds?: string[]): Promise<CourseOverview[]> {
+    if (!supabase) {
+        throw new Error("Supabase is not configured.");
+    }
+
+    let query = supabase
+        .from("course_overviews")
+        .select("course_id,summary,outcomes,syllabus");
+    if (courseIds) {
+        query = query.in("course_id", courseIds);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+        throw error;
+    }
+
+    return (data ?? []).map((row) => ({
+        course_id: row.course_id,
+        summary: row.summary,
+        outcomes: Array.isArray(row.outcomes) ? row.outcomes : [],
+        syllabus: Array.isArray(row.syllabus) ? row.syllabus : [],
+    }));
+}
+
+export async function fetchCourseModules(courseId: string): Promise<CourseModule[]> {
+    if (!supabase) {
+        throw new Error("Supabase is not configured.");
+    }
+
+    const { data, error } = await supabase
+        .from("course_modules")
+        .select("course_id,position,title,content,image_url")
+        .eq("course_id", courseId)
+        .order("position");
+
+    if (error) {
+        throw error;
+    }
+
+    return (data ?? []).map((row) => ({
+        course_id: row.course_id,
+        position: row.position,
+        title: row.title,
+        content: row.content ?? "",
+        image_url: row.image_url,
+    }));
+}
 
 export async function fetchEnrollments(userId: string): Promise<ServerEnrollment[]> {
     if (!supabase) {
