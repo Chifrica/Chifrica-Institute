@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import "../auth.css";
 import "./style.css";
@@ -12,6 +12,11 @@ const Login = () => {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const navigate = useNavigate();
+    const location = useLocation();
+    const requestedReturnPath = new URLSearchParams(location.search).get("returnTo");
+    const returnPath = requestedReturnPath?.startsWith("/courses/") && !requestedReturnPath.startsWith("//")
+        ? requestedReturnPath
+        : "/courses";
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -31,10 +36,10 @@ const Login = () => {
         }
         window.localStorage.setItem(AUTH_SESSION_KEY, "supabase");
         try {
-            navigate("/courses");
+            navigate(returnPath, { replace: true });
         } catch (navigationError) {
             console.error("Unable to open the courses page.", navigationError);
-            setError("Signed in, but unable to open My Learning.");
+            setError("Signed in, but unable to open the requested page.");
         }
     };
 
@@ -130,7 +135,7 @@ const Login = () => {
 
                     <p className="auth-switch">
                         New to Chifrica?
-                        <Link to="/register">Create account</Link>
+                        <Link to={`/register${location.search}`}>Create account</Link>
                     </p>
                 </div>
             </section>

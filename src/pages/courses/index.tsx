@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { FiArrowLeft, FiArrowRight, FiAward, FiBookOpen, FiCheckCircle, FiClock, FiUser, FiX } from "react-icons/fi";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { type Course, type CourseModule, type CourseOverview, type LearningProgress } from "../../data/courses";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
+import { getCourseOverviewPath, getCourseSlug, type Course, type CourseModule, type CourseOverview, type LearningProgress } from "../../data/courses";
 import { supabase } from "../../lib/supabase";
 import {
     completeLesson,
@@ -18,9 +18,6 @@ import {
 } from "../../services/learning";
 import { getCurrentProfileName, getCurrentUserId } from "../../auth";
 import "./style.css";
-
-const getCourseSlug = (title: string) =>
-    title.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 const Courses = () => {
     const [courses, setCourses] = useState<Course[]>([]);
@@ -39,12 +36,14 @@ const Courses = () => {
     const [passedExams, setPassedExams] = useState<Set<string>>(new Set());
     const [activeExamKind, setActiveExamKind] = useState<"checkpoint" | "final">("checkpoint");
     const [displayName, setDisplayName] = useState("Student");
+    const [studentAuthenticated, setStudentAuthenticated] = useState(false);
     const [catalogLoading, setCatalogLoading] = useState(true);
     const [learningLoading, setLearningLoading] = useState(true);
     const [loadedModulesCourseId, setLoadedModulesCourseId] = useState<string | null>(null);
     const [enrolling, setEnrolling] = useState(false);
     const { courseSlug, lessonNumber } = useParams<{ courseSlug: string; lessonNumber?: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
         let cancelled = false;
@@ -95,13 +94,15 @@ const Courses = () => {
                 if (!supabase) {
                     throw new Error("Supabase is not configured. Learning data cannot be loaded.");
                 }
-                const [profileName, userId] = await Promise.all([
-                    getCurrentProfileName(),
-                    getCurrentUserId(),
-                ]);
+                const userId = await getCurrentUserId();
                 if (!userId) {
-                    throw new Error("Your session has expired. Please sign in again.");
+                    if (!cancelled) {
+                        setStudentAuthenticated(false);
+                    }
+                    return;
                 }
+                setStudentAuthenticated(true);
+                const profileName = await getCurrentProfileName();
                 const [serverProgress, enrollments, passedExamKeys] = await Promise.all([
                     fetchAllLessonProgress(userId),
                     fetchEnrollments(userId),
@@ -157,9 +158,6 @@ const Courses = () => {
     const completedCourses = enrolledCourses.filter((course) => completedCourseIds.has(course.id));
     const currentCourses = enrolledCourses.filter((course) => !completedCourseIds.has(course.id));
     const inProgressCourses = currentCourses.filter((course) => getCompletedLessons(course) > 0);
-    const availableCourses = courses.filter(
-        (course) => !Object.prototype.hasOwnProperty.call(progress, course.id),
-    );
     const activeOverview = activeCourse ? courseOverviews[activeCourse.id] : undefined;
     const moduleCount = activeCourse ? getModuleCount(activeCourse) : 0;
     const requestedLessonIndex = Number(lessonNumber) - 1;
@@ -210,15 +208,22 @@ const Courses = () => {
     }, [courseSlug, learningLoading, activeCourse, isCourseOverview, isCourseEnrolled]);
 
     const enroll = async (targetCourseId: string) => {
+        const course = courses.find((item) => item.id === targetCourseId);
+        if (!course) {
+            setServerError("The selected course is no longer available.");
+            return;
+        }
+        if (!studentAuthenticated) {
+            const returnTo = encodeURIComponent(getCourseOverviewPath(course));
+            navigate(`/login?returnTo=${returnTo}`);
+            return;
+        }
+
         setEnrolling(true);
         setServerError("");
         try {
             await enrollInCourse(targetCourseId);
             setProgress((current) => ({ ...current, [targetCourseId]: [] }));
-            const course = courses.find((item) => item.id === targetCourseId);
-            if (!course) {
-                throw new Error("The selected course is no longer available.");
-            }
             navigate(`/courses/${getCourseSlug(course.title)}/1`);
         } catch (error) {
             console.error("Unable to enrol in course.", error);
@@ -240,10 +245,6 @@ const Courses = () => {
         if (activeCourse) {
             navigate(`/courses/${getCourseSlug(activeCourse.title)}/${index + 1}`);
         }
-    };
-
-    const openCourseOverview = (course: Course) => {
-        navigate(`/courses/${getCourseSlug(course.title)}/overview`);
     };
 
     const completeActiveLesson = () => {
@@ -626,10 +627,6 @@ const Courses = () => {
         }
 
         if (isCourseOverview) {
-            if (!learningLoading && isCourseEnrolled) {
-                return <Navigate to={`/courses/${canonicalCourseSlug}/1`} replace />;
-            }
-
             return (
                 <div className="learning-dashboard learning-dashboard--reader">
                     <div className="learning-dashboard-inner">
@@ -664,9 +661,21 @@ const Courses = () => {
                                         className="learning-primary-button"
                                         type="button"
                                         disabled={enrolling || learningLoading}
-                                        onClick={() => void enroll(activeCourse.id)}
+                                        onClick={() => {
+                                            if (isCourseEnrolled) {
+                                                navigate(`/courses/${canonicalCourseSlug}/1`);
+                                            } else {
+                                                void enroll(activeCourse.id);
+                                            }
+                                        }}
                                     >
-                                        {learningLoading ? "Loading your learning status..." : enrolling ? "Enrolling..." : "Enrol and start learning"}
+                                        {learningLoading
+                                            ? "Loading your learning status..."
+                                            : enrolling
+                                                ? "Enrolling..."
+                                                : isCourseEnrolled
+                                                    ? "Continue learning"
+                                                    : "Enrol and start learning"}
                                         <FiArrowRight aria-hidden="true" />
                                     </button>
                                 </div>
@@ -718,6 +727,15 @@ const Courses = () => {
                         </div>
                     </div>
                 </div>
+            );
+        }
+
+        if (!studentAuthenticated) {
+            return (
+                <Navigate
+                    to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
+                    replace
+                />
             );
         }
 
@@ -830,50 +848,6 @@ const Courses = () => {
                     )}
                 </section>
 
-                <section className="learning-section learning-section--explore" aria-labelledby="explore-heading">
-                    <div className="learning-section-heading">
-                        <div>
-                            <p className="learning-eyebrow">Keep growing</p>
-                            <h2 id="explore-heading">Explore More Courses</h2>
-                            <p>Discover new skills and enrol in another course.</p>
-                        </div>
-                    </div>
-                    {availableCourses.length ? (
-                        <div className="learning-course-grid learning-course-grid--explore">
-                            {availableCourses.map((course) => (
-                                <article className="learning-explore-card" key={course.id}>
-                                    <button
-                                        className="learning-explore-image-button"
-                                        type="button"
-                                        onClick={() => openCourseOverview(course)}
-                                        aria-label={`View ${course.title} course overview`}
-                                    >
-                                        <img src={course.image} alt="" loading="lazy" />
-                                    </button>
-                                    <div className="learning-explore-content">
-                                        <p className="learning-course-kicker">{course.difficulty} <span aria-hidden="true">·</span> {course.duration}</p>
-                                        <button className="learning-explore-title" type="button" onClick={() => openCourseOverview(course)}>
-                                            {course.title}
-                                        </button>
-                                        <p className="learning-course-description">{course.description}</p>
-                                        <div className="learning-explore-meta">
-                                            <span><FiUser aria-hidden="true" /> {course.instructor}</span>
-                                            <span><FiBookOpen aria-hidden="true" /> {getModuleCount(course)} lessons</span>
-                                        </div>
-                                        <button className="learning-secondary-button" type="button" onClick={() => openCourseOverview(course)}>
-                                            View course
-                                        </button>
-                                    </div>
-                                </article>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="learning-empty-state learning-empty-state--compact">
-                            <FiCheckCircle aria-hidden="true" />
-                            <p>You are enrolled in every available course. Check back soon for more.</p>
-                        </div>
-                    )}
-                </section>
             </div>
         </div>
     );

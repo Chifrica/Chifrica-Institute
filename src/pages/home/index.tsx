@@ -1,10 +1,42 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Hero from "../../components/hero";
 import Statistics from "../statistics";
+import { getCourseOverviewPath, type Course } from "../../data/courses";
+import { fetchPublishedCourses } from "../../services/learning";
 import "./style.css";
 
 
 const Home = () => {
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [coursesLoading, setCoursesLoading] = useState(true);
+    const [coursesError, setCoursesError] = useState("");
+
+    useEffect(() => {
+        let cancelled = false;
+        void fetchPublishedCourses()
+            .then((publishedCourses) => {
+                if (!cancelled) {
+                    setCourses(publishedCourses);
+                }
+            })
+            .catch((error: unknown) => {
+                console.error("Unable to load courses for the home page.", error);
+                if (!cancelled) {
+                    setCoursesError(error instanceof Error ? error.message : "Courses could not be loaded.");
+                }
+            })
+            .finally(() => {
+                if (!cancelled) {
+                    setCoursesLoading(false);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
     return (
         <>
             {/* <Navbar /> */}
@@ -27,89 +59,32 @@ const Home = () => {
                         </p>
                     </div>
 
-                    <div className="course-grid">
-
-                        <div className="course-card">
-                            <img
-                                src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600"
-                                alt="Web Development"
-                            />
-
-                            <div className="course-content">
-                                <span className="category">Web Development</span>
-
-                                <h3>Complete HTML, CSS & JavaScript</h3>
-
-                                <p>
-                                    Learn to build responsive websites from scratch.
-                                </p>
-
-                                <div className="course-footer">
-                                    <span>⭐⭐⭐⭐⭐</span>
-
-                                    <Link to="/login">
-                                        <button>Enroll Now</button>
-                                    </Link>
-
-                                </div>
-                            </div>
+                    {coursesLoading ? (
+                        <p className="home-courses-state" role="status">Loading courses...</p>
+                    ) : coursesError ? (
+                        <p className="home-courses-state" role="alert">Courses are temporarily unavailable.</p>
+                    ) : courses.length ? (
+                        <div className="course-grid">
+                            {courses.map((course) => (
+                                <article className="course-card" key={course.id}>
+                                    <img src={course.image} alt="" loading="lazy" />
+                                    <div className="course-content">
+                                        <span className="category">{course.difficulty} · {course.duration}</span>
+                                        <h3>{course.title}</h3>
+                                        <p>{course.description}</p>
+                                        <div className="course-footer">
+                                            <span>{course.instructor}</span>
+                                            <Link className="course-view-button" to={getCourseOverviewPath(course)}>
+                                                View course
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </article>
+                            ))}
                         </div>
-
-                        <div className="course-card">
-                            <img
-                                src="https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=600"
-                                alt="React Native"
-                            />
-
-                            <div className="course-content">
-                                <span className="category">
-                                    Mobile Development
-                                </span>
-
-                                <h3>React Native and Flutter Bootcamp</h3>
-
-                                <p>
-                                    Build Android and iOS apps using React Native and Flutter.
-                                </p>
-
-                                <div className="course-footer">
-                                    <span>⭐⭐⭐⭐⭐</span>
-
-                                    <Link to="/login">
-                                        <button>Enroll Now</button>
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="course-card">
-                            <img
-                                src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600"
-                                alt="Artificial Intelligence"
-                            />
-
-                            <div className="course-content">
-                                <span className="category">
-                                    Artificial Intelligence
-                                </span>
-
-                                <h3>AI & Prompt Engineering</h3>
-
-                                <p>
-                                    Learn how to build and use modern AI tools.
-                                </p>
-
-                                <div className="course-footer">
-                                    <span>⭐⭐⭐⭐⭐</span>
-
-                                    <Link to="/login">
-                                        <button>Enroll Now</button>
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
+                    ) : (
+                        <p className="home-courses-state">No published courses are available right now.</p>
+                    )}
 
                 </section>
 

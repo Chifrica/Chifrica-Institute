@@ -45,7 +45,7 @@ function App() {
           <Route path="/courses" element={isSignedIn() ? <Courses /> : <Navigate to="/login" replace />} />
           <Route
             path="/courses/:courseSlug/:lessonNumber?"
-            element={isSignedIn() ? <Courses /> : <Navigate to="/login" replace />}
+            element={<Courses />}
           />
 
           {/* Fallback: render Home for unknown routes */}

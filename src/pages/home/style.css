@@ -87,18 +87,28 @@
     margin-top:25px;
 }
 
-.course-footer button{
+.course-view-button{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
     background:#2E8B57;
     color:#fff;
     border:none;
     padding:12px 20px;
     border-radius:30px;
-    cursor:pointer;
+    text-decoration:none;
+    font-weight:600;
     transition:.3s;
 }
 
-.course-footer button:hover{
+.course-view-button:hover{
     background:#236b44;
+}
+
+.home-courses-state{
+    margin:0;
+    color:#68756d;
+    text-align:center;
 }
 
 /* ===========================

@@ -24,3 +24,9 @@ export type CourseOverview = {
 };
 
 export type LearningProgress = Record<string, string[]>;
+
+export const getCourseSlug = (title: string) =>
+    title.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+export const getCourseOverviewPath = (course: Pick<Course, "title">) =>
+    `/courses/${getCourseSlug(course.title)}/overview`;

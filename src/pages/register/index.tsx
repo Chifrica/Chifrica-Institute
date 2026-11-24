@@ -4,7 +4,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import "../auth.css";
 import "./style.css";
 import { supabase, isSupabaseConfigured } from "../../lib/supabase";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const passwordMeetsRequirements = (password: string) =>
     /[A-Z]/.test(password) &&
@@ -16,8 +16,14 @@ const Register = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [passwordError, setPasswordError] = useState("");
     const [submitError, setSubmitError] = useState("");
+    const [accountCreated, setAccountCreated] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
+    const requestedReturnPath = new URLSearchParams(location.search).get("returnTo");
+    const returnPath = requestedReturnPath?.startsWith("/courses/") && !requestedReturnPath.startsWith("//")
+        ? requestedReturnPath
+        : "/courses";
     const [formData, setFormData] = useState({
         fullName: "",
         email: "",
@@ -51,6 +57,7 @@ const Register = () => {
         }
         setPasswordError("");
         setSubmitError("");
+        setAccountCreated(false);
         setSubmitting(true);
 
         if (!isSupabaseConfigured || !supabase) {
@@ -92,9 +99,9 @@ const Register = () => {
         }
         setSubmitting(false);
         if (data.session) {
-            navigate("/courses");
+            navigate(returnPath, { replace: true });
         } else {
-            setSubmitError("Account created. Check your email and confirm it before logging in.");
+            setAccountCreated(true);
         }
     };
 
@@ -288,6 +295,12 @@ const Register = () => {
                                 {submitError}
                             </p>
                         )}
+                        {accountCreated && (
+                            <p className="auth-password-hint" role="status">
+                                Account created. Check your email and confirm it, then{" "}
+                                <Link to={`/login${location.search}`}>log in to continue</Link>.
+                            </p>
+                        )}
 
                         <button className="auth-primary" type="submit" disabled={submitting}>
                             {submitting ? "Creating account..." : "Create account"}
@@ -296,7 +309,7 @@ const Register = () => {
 
                     <p className="auth-switch">
                         Already have an account?
-                        <Link to="/login">Log in</Link>
+                        <Link to={`/login${location.search}`}>Log in</Link>
                     </p>
                 </div>
             </section>

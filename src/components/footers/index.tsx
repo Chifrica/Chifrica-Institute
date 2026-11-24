@@ -84,15 +84,15 @@ const Footer = () => {
 
                     <h3>Popular Courses</h3>
 
-                    <Link to="#">Web Development</Link>
+                    <Link to="/courses/frontend-web-development/overview">Frontend Web Development</Link>
 
-                    <Link to="#">Mobile App Development</Link>
+                    <Link to="/courses/react-native-development/overview">React Native Development</Link>
 
-                    <Link to="#">Artificial Intelligence</Link>
+                    <Link to="/courses/javascript-essentials/overview">JavaScript Essentials</Link>
 
-                    <Link to="#">UI/UX Design</Link>
+                    <Link to="/courses/ui-ux-design/overview">UI/UX Design</Link>
 
-                    <Link to="#">Python Programming</Link>
+                    <Link to="/courses/python-programming/overview">Python Programming</Link>
 
                 </div>
 
