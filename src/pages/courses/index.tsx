@@ -659,12 +659,7 @@ const Courses = () => {
                                         <span><FiUser aria-hidden="true" /> {activeCourse.instructor}</span>
                                         <span><FiBookOpen aria-hidden="true" /> {activeOverview?.syllabus.length ?? 0} modules</span>
                                     </div>
-                                    {!!activeOverview?.outcomes.length && (
-                                        <ul className="learning-overview-outcomes">
-                                            {activeOverview.outcomes.map((outcome) => <li key={outcome}>{outcome}</li>)}
-                                        </ul>
-                                    )}
-                                    {overviewError && <p className="learning-storage-error" role="alert">{overviewError}</p>}
+
                                     <button
                                         className="learning-primary-button"
                                         type="button"
@@ -695,6 +690,18 @@ const Courses = () => {
                                         {overviewError || "The course outline is not available yet."}
                                     </p>
                                 )}
+                            </div>
+
+                            {!!activeOverview?.outcomes.length && (
+                                <section className="learning-overview-outcomes" aria-labelledby="course-outcomes-title">
+                                    <h2 id="course-outcomes-title">What you’ll learn</h2>
+                                    <ul className="learning-overview-outcomes-list">
+                                        {activeOverview.outcomes.map((outcome) => <li key={outcome}>{outcome}</li>)}
+                                    </ul>
+                                </section>
+                            )}
+                            <div className="learning-overview-feedback">
+                                {overviewError && <p className="learning-storage-error" role="alert">{overviewError}</p>}
                             </div>
                         </section>
                     </div>
