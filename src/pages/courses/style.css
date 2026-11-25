@@ -804,8 +804,10 @@
 }
 
 .learning-reader-close:hover {
-    background: var(--learning-green-pale);
-    color: var(--learning-green-dark);
+    /* background: var(--learning-green-pale); */
+    background: red;
+    color: white;
+    /* color: var(--learning-green-dark); */
 }
 
 .learning-reader-close svg {

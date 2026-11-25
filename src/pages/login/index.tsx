@@ -16,7 +16,7 @@ const Login = () => {
     const requestedReturnPath = new URLSearchParams(location.search).get("returnTo");
     const returnPath = requestedReturnPath?.startsWith("/courses/") && !requestedReturnPath.startsWith("//")
         ? requestedReturnPath
-        : "/courses";
+        : "/my-learning";
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();

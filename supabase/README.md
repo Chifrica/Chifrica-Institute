@@ -4,9 +4,10 @@
 
 1. Create a Supabase project.
 2. Open **SQL Editor** and run `migrations/001_chifrica_learning.sql`.
-3. In **Authentication > Providers > Email**, enable email/password sign-in.
-4. Copy the project URL and publishable/anonymous key.
-5. Create `.env.local` from `.env.example`:
+3. Run `migrations/002_course_categories.sql` to add course categories. Existing courses default to **Popular**; set `courses.category` to values such as `Programming`, `Design`, `AI & Emerging Tech`, or `Professional Skills` to place them in those catalogue filters.
+4. In **Authentication > Providers > Email**, enable email/password sign-in.
+5. Copy the project URL and publishable/anonymous key.
+6. Create `.env.local` from `.env.example`:
 
 ```text
 VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co

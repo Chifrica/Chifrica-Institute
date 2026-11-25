@@ -609,7 +609,7 @@ const Courses = () => {
                             {catalogError || "This course could not be found in the published course catalogue."}
                         </p>
                         <button className="learning-secondary-button" type="button" onClick={() => navigate("/courses")}>
-                            Return to My Learning
+                            Return to course catalogue
                         </button>
                     </div>
                 </div>

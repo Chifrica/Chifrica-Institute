@@ -6,12 +6,12 @@ import { AUTH_SESSION_KEY, clearAuthSession } from "../../auth";
 import { supabase } from "../../lib/supabase";
 
 const courseLinks = [
-    "Web & Software Development",
-    "Programming Languages",
-    "AI & Emerging Technologies",
-    "Design & Professional Skills",
-    "Upcoming Classes",
-    "Self-Paced Learning",
+    { label: "Web & Software Development", category: "Programming" },
+    { label: "Programming Languages", category: "Programming" },
+    { label: "AI & Emerging Technologies", category: "AI & Emerging Tech" },
+    { label: "Design & Professional Skills", category: "Design" },
+    { label: "Upcoming Classes", category: "Upcoming Classes" },
+    { label: "Self-Paced Learning", category: "Self-Paced Learning" },
 ];
 
 const kidsAcademyLinks = [
@@ -108,7 +108,7 @@ const Navbar = () => {
             >
                 <Link to="/" onClick={closeNavigation}>Home</Link>
                 <Link to="/about" onClick={closeNavigation}>About</Link>
-                {authenticated && <Link to="/courses" onClick={closeNavigation}>My Learning</Link>}
+                {authenticated && <Link to="/my-learning" onClick={closeNavigation}>My Learner</Link>}
 
                 <div
                     className={`nav-dropdown${openDropdown === "courses" ? " is-open" : ""}`}
@@ -121,7 +121,10 @@ const Navbar = () => {
                         type="button"
                         aria-expanded={openDropdown === "courses"}
                         aria-controls="courses-dropdown"
-                        onClick={() => setOpenDropdown(openDropdown === "courses" ? null : "courses")}
+                        onClick={() => {
+                            closeNavigation();
+                            navigate("/courses");
+                        }}
                         onFocus={() => setOpenDropdown("courses")}
                     >
                         Courses <FiChevronDown aria-hidden="true" />
@@ -129,10 +132,10 @@ const Navbar = () => {
                     <div className="nav-dropdown-menu" id="courses-dropdown">
                         <p className="nav-dropdown-heading">Explore courses</p>
                         <div className="nav-dropdown-grid">
-                            {courseLinks.map((label) => (
+                            {courseLinks.map(({ label, category }) => (
                                 <Link
                                     key={label}
-                                    to="/courses"
+                                    to={`/courses?category=${encodeURIComponent(category)}`}
                                     onClick={closeNavigation}
                                 >
                                     {label}
@@ -178,13 +181,13 @@ const Navbar = () => {
                 <Link to="/contact" onClick={closeNavigation}>Contact</Link>
                 {authenticated && (
                     <div className="nav-mobile-account">
-                        <button type="button" onClick={() => { closeNavigation(); navigate("/courses#profile"); }}>
+                        <button type="button" onClick={() => { closeNavigation(); navigate("/profile"); }}>
                             Profile
                         </button>
-                        <button type="button" onClick={() => { closeNavigation(); navigate("/courses#achievements"); }}>
+                        <button type="button" onClick={() => { closeNavigation(); navigate("/my-learning#achievements"); }}>
                             Achievements
                         </button>
-                        <button type="button" onClick={() => { closeNavigation(); navigate("/courses#certificates"); }}>
+                        <button type="button" onClick={() => { closeNavigation(); navigate("/my-learning#certificates"); }}>
                             Certificates
                         </button>
                         <button type="button" onClick={() => { setMenuOpen(false); setLogoutConfirmOpen(true); }}>
@@ -209,15 +212,15 @@ const Navbar = () => {
                             <FiChevronDown aria-hidden="true" />
                         </button>
                         <div className="nav-user-menu" id="user-account-menu">
-                            <button type="button" onClick={() => { closeNavigation(); navigate("/courses#profile"); }}>
+                            <button type="button" onClick={() => { closeNavigation(); navigate("/profile"); }}>
                                 <FiUser aria-hidden="true" />
                                 <span><strong>Profile</strong><small>View your account</small></span>
                             </button>
-                            <button type="button" onClick={() => { closeNavigation(); navigate("/courses#achievements"); }}>
+                            <button type="button" onClick={() => { closeNavigation(); navigate("/my-learning#achievements"); }}>
                                 <FiAward aria-hidden="true" />
                                 <span><strong>Achievements</strong><small>Completed learning</small></span>
                             </button>
-                            <button type="button" onClick={() => { closeNavigation(); navigate("/courses#certificates"); }}>
+                            <button type="button" onClick={() => { closeNavigation(); navigate("/my-learning#certificates"); }}>
                                 <FiAward aria-hidden="true" />
                                 <span><strong>Certificates</strong><small>View earned certificates</small></span>
                             </button>

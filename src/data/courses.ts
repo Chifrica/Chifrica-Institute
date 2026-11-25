@@ -4,6 +4,7 @@ export type Course = {
     instructor: string;
     duration: string;
     difficulty: string;
+    category: string;
     image: string;
     description: string;
 };

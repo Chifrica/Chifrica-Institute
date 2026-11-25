@@ -23,7 +23,7 @@ const Register = () => {
     const requestedReturnPath = new URLSearchParams(location.search).get("returnTo");
     const returnPath = requestedReturnPath?.startsWith("/courses/") && !requestedReturnPath.startsWith("//")
         ? requestedReturnPath
-        : "/courses";
+        : "/my-learning";
     const [formData, setFormData] = useState({
         fullName: "",
         email: "",

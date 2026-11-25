@@ -6,28 +6,72 @@ export type ServerEnrollment = {
     status: "enrolled" | "in_progress" | "completed";
 };
 
+const isMissingCourseCategory = (error: { code?: string; message: string; details?: string; hint?: string }) => {
+    const description = `${error.message} ${error.details ?? ""} ${error.hint ?? ""}`.toLowerCase();
+    return description.includes("category")
+        && (error.code === "42703"
+            || error.code === "PGRST204"
+            || description.includes("does not exist")
+            || description.includes("schema cache"));
+};
+
+const inferCourseCategory = (title: string, description: string) => {
+    const text = `${title} ${description}`.toLowerCase();
+    if (/\b(programming|developer|development|coding|javascript|python|react|software|web)\b/.test(text)) {
+        return "Programming";
+    }
+    if (/\b(design|ui\/ux|ux|graphic|figma)\b/.test(text)) {
+        return "Design";
+    }
+    if (/\b(ai|artificial intelligence|machine learning|data science|emerging tech)\b/.test(text)) {
+        return "AI & Emerging Tech";
+    }
+    if (/\b(professional|business|career|leadership|communication)\b/.test(text)) {
+        return "Professional Skills";
+    }
+    return "Popular";
+};
+
 export async function fetchPublishedCourses(): Promise<Course[]> {
     if (!supabase) {
         throw new Error("Supabase is not configured.");
     }
 
-    const { data, error } = await supabase
+    const { data: categorizedCourses, error: categorizedError } = await supabase
         .from("courses")
-        .select("id,title,description,instructor_name,duration,difficulty,thumbnail_url")
+        .select("id,title,description,instructor_name,duration,difficulty,category,thumbnail_url")
         .eq("published", true)
         .order("title");
 
-    if (error) {
-        throw error;
+    let rows = categorizedCourses;
+    let hasCategoryColumn = true;
+    if (categorizedError) {
+        if (!isMissingCourseCategory(categorizedError)) {
+            throw categorizedError;
+        }
+
+        const { data, error } = await supabase
+            .from("courses")
+            .select("id,title,description,instructor_name,duration,difficulty,thumbnail_url")
+            .eq("published", true)
+            .order("title");
+        if (error) {
+            throw error;
+        }
+        rows = data;
+        hasCategoryColumn = false;
     }
 
-    return (data ?? []).map((row) => ({
+    return (rows ?? []).map((row) => ({
         id: row.id,
         title: row.title,
         description: row.description,
         instructor: row.instructor_name,
         duration: row.duration,
         difficulty: row.difficulty,
+        category: hasCategoryColumn && "category" in row && typeof row.category === "string"
+            ? row.category
+            : inferCourseCategory(row.title, row.description),
         image: row.thumbnail_url ?? "",
     }));
 }

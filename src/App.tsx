@@ -12,6 +12,8 @@ import Contact from './pages/contact'
 import KidsAcademy from './pages/kidAcademy'
 import Footer from './components/footers'
 import Courses from './pages/courses'
+import CourseCatalog from './pages/courseCatalog'
+import Profile from './pages/profile'
 import { isSignedIn } from './auth'
 
 function App() {
@@ -42,7 +44,9 @@ function App() {
           <Route path="/statistics" element={<Statistics />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/kidAcademy" element={<KidsAcademy />} />
-          <Route path="/courses" element={isSignedIn() ? <Courses /> : <Navigate to="/login" replace />} />
+          <Route path="/courses" element={<CourseCatalog />} />
+          <Route path="/my-learning" element={isSignedIn() ? <Courses /> : <Navigate to="/login" replace />} />
+          <Route path="/profile" element={isSignedIn() ? <Profile /> : <Navigate to="/login" replace />} />
           <Route
             path="/courses/:courseSlug/:lessonNumber?"
             element={<Courses />}
