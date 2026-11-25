@@ -43,7 +43,16 @@ export async function fetchPublishedCourses(): Promise<Course[]> {
         .eq("published", true)
         .order("title");
 
-    let rows = categorizedCourses;
+    let rows: Array<{
+        id: any;
+        title: any;
+        description: any;
+        instructor_name: any;
+        duration: any;
+        difficulty: any;
+        category?: any;
+        thumbnail_url: any;
+    }> | null = categorizedCourses;
     let hasCategoryColumn = true;
     if (categorizedError) {
         if (!isMissingCourseCategory(categorizedError)) {
