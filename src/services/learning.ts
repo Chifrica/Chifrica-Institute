@@ -197,12 +197,40 @@ export async function fetchAllLessonProgress(userId: string): Promise<LearningPr
 
 export async function enrollInCourse(courseId: string): Promise<void> {
     if (!supabase) {
+        throw new Error("Supabase is not configured.");
+    }
+
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+        throw sessionError;
+    }
+    if (!sessionData.session) {
+        throw new Error("Authentication required. Please sign in again.");
+    }
+
+    const { error: rpcError } = await supabase.rpc("enroll_in_course", { p_course_id: courseId });
+    if (!rpcError) {
         return;
     }
 
-    const { error } = await supabase.rpc("enroll_in_course", { p_course_id: courseId });
-    if (error) {
-        throw error;
+    const missingFunction = rpcError.code === "PGRST202"
+        || rpcError.message.toLowerCase().includes("could not find the function");
+    if (!missingFunction) {
+        throw rpcError;
+    }
+
+    const { error: insertError } = await supabase
+        .from("enrollments")
+        .upsert(
+            {
+                user_id: sessionData.session.user.id,
+                course_id: courseId,
+                status: "enrolled",
+            },
+            { onConflict: "user_id,course_id" },
+        );
+    if (insertError) {
+        throw insertError;
     }
 }
 

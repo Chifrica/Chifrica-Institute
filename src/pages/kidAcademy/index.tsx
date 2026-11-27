@@ -1,779 +1,271 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+    FiArrowRight,
+    FiAward,
+    FiCheck,
+    FiChevronDown,
+    FiCode,
+    FiCpu,
+    FiGrid,
+    FiGlobe,
+    FiPlay,
+    FiStar,
+    FiUsers,
+} from "react-icons/fi";
 import "./style.css";
 
+const ageGroups = [
+    {
+        id: "explorers",
+        ages: "Ages 5–8",
+        title: "Little Explorers",
+        description: "Build curiosity through stories, games, colours and simple problem-solving.",
+        icon: FiStar,
+        accent: "yellow",
+        courses: ["Creative Coding", "Logic Games", "Digital Storytelling"],
+    },
+    {
+        id: "coders",
+        ages: "Ages 9–12",
+        title: "Young Coders",
+        description: "Create games, websites and animations with guided, hands-on projects.",
+        icon: FiCode,
+        accent: "mint",
+        courses: ["Scratch", "Python Starter", "Web Basics"],
+    },
+    {
+        id: "innovators",
+        ages: "Ages 13–17",
+        title: "Future Innovators",
+        description: "Explore real-world technology, robotics, AI and independent creation.",
+        icon: FiCpu,
+        accent: "blue",
+        courses: ["Python", "AI Foundations", "Robotics"],
+    },
+];
+
+const learningPaths = [
+    {
+        title: "Scratch & Game Design",
+        description: "Turn imagination into animated stories and playable games.",
+        icon: FiGrid,
+        level: "Beginner",
+        accent: "yellow",
+    },
+    {
+        title: "Web Creators",
+        description: "Design colourful websites and publish a first project.",
+        icon: FiGlobe,
+        level: "Beginner",
+        accent: "mint",
+    },
+    {
+        title: "Python Explorers",
+        description: "Learn real coding while solving fun, practical challenges.",
+        icon: FiCode,
+        level: "Intermediate",
+        accent: "blue",
+    },
+    {
+        title: "Robotics Studio",
+        description: "Build, test and programme intelligent machines.",
+        icon: FiCpu,
+        level: "Advanced",
+        accent: "purple",
+    },
+];
+
 const KidsAcademy = () => {
+    const navigate = useNavigate();
+    const [activeAge, setActiveAge] = useState("coders");
+    const [openFaq, setOpenFaq] = useState(0);
+    const selectedAge = ageGroups.find((group) => group.id === activeAge) ?? ageGroups[1];
+
     return (
-        <div className="kids-page">
-
-            {/* ================= HERO ================= */}
-
+        <main className="kids-academy">
             <section className="kids-hero">
-
-                <div className="kids-content">
-
-                    <span className="hero-tag">
-                        🌟 Welcome to Chifrica Kids Academy
-                    </span>
-
-                    <h1>
-                        Learn Programming
-                        <br />
-                        Through Fun,
-                        <span> Creativity </span>
-                        & Adventure
-                    </h1>
-
-                    <p>
-                        Coding isn't just for adults! Our fun and interactive
-                        technology courses help children build confidence,
-                        creativity, problem-solving skills and digital knowledge
-                        from an early age.
+                <div className="kids-hero-copy">
+                    <p className="kids-kicker"><span><FiStar aria-hidden="true" /></span> Chifrica Kids Academy</p>
+                    <h1>Big ideas begin with a little <em>curiosity.</em></h1>
+                    <p className="kids-hero-description">
+                        A joyful, guided technology programme where children learn to code,
+                        design, build and think confidently.
                     </p>
-
-                    <div className="hero-buttons">
-
-                        <button className="explore-btn">
-                            Explore Courses
+                    <div className="kids-hero-actions">
+                        <button type="button" className="kids-primary-action" onClick={() => navigate("/courses")}>
+                            Find a course <FiArrowRight aria-hidden="true" />
                         </button>
-
-                        <button className="watch-btn">
-                            ▶ Watch Demo
+                        <button type="button" className="kids-video-action" onClick={() => document.querySelector(".kids-learning")?.scrollIntoView({ behavior: "smooth" })}>
+                            <span><FiPlay aria-hidden="true" /></span> How we learn
                         </button>
-
                     </div>
-
+                    <div className="kids-trust-row">
+                        <span><FiUsers aria-hidden="true" /> 500+ young learners</span>
+                        <span><FiAward aria-hidden="true" /> Project-based learning</span>
+                    </div>
                 </div>
 
-                <div className="kids-image">
-
+                <div className="kids-hero-art" aria-label="A young learner discovering technology">
+                    <div className="kids-art-dots" aria-hidden="true" />
+                    <div className="kids-art-orbit orbit-one" aria-hidden="true" />
+                    <div className="kids-art-orbit orbit-two" aria-hidden="true" />
                     <img
-                        src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=900"
-                        alt="Kids Learning"
+                        src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=900&q=85"
+                        alt="Children enjoying a classroom learning activity"
                     />
-
-                    <div className="floating-card card1">
-                        🚀 Fun Coding
-                    </div>
-
-                    <div className="floating-card card2">
-                        🤖 Robotics
-                    </div>
-
-                    <div className="floating-card card3">
-                        🎮 Coding Games
-                    </div>
-
+                    {/* <div className="kids-float-card kids-float-progress">
+                        <span>Today's progress</span>
+                        <strong>Game Builder</strong>
+                        <div><i /></div>
+                        <small>3 of 4 steps complete</small>
+                    </div> */}
+                    {/* <div className="kids-float-card kids-float-badge">
+                        <FiAward aria-hidden="true" />
+                        <div><strong>New badge!</strong><span>Creative Coder</span></div>
+                    </div> */}
                 </div>
-
             </section>
 
-            {/* ================= AGE GROUPS ================= */}
-
-            <section className="age-section">
-
-                <div className="section-title">
-
-                    <h2>Choose Your Learning Level</h2>
-
-                    <p>
-                        Every child learns differently. Select the perfect age
-                        group to begin the journey.
-                    </p>
-
+            <section className="kids-age-finder" aria-labelledby="kids-age-title">
+                <div className="kids-section-heading">
+                    <p>CHOOSE A LEARNING ADVENTURE</p>
+                    <h2 id="kids-age-title">Made for every stage</h2>
                 </div>
-
-                <div className="age-grid">
-
-                    <div className="age-card">
-
-                        <div className="emoji">
-                            🧸
-                        </div>
-
-                        <h3>Little Explorers</h3>
-
-                        <h4>Ages 5 - 8</h4>
-
-                        <p>
-                            Learn through games, puzzles,
-                            storytelling and colorful activities.
-                        </p>
-
-                        <button>
-                            Start Learning
-                        </button>
-
-                    </div>
-
-                    <div className="age-card">
-
-                        <div className="emoji">
-                            💻
-                        </div>
-
-                        <h3>Young Coders</h3>
-
-                        <h4>Ages 9 - 12</h4>
-
-                        <p>
-                            Build websites, coding games,
-                            animations and fun applications.
-                        </p>
-
-                        <button>
-                            View Courses
-                        </button>
-
-                    </div>
-
-                    <div className="age-card">
-
-                        <div className="emoji">
-                            🚀
-                        </div>
-
-                        <h3>Future Innovators</h3>
-
-                        <h4>Ages 13 - 17</h4>
-
-                        <p>
-                            Learn Python, AI,
-                            Mobile Apps, Web Development
-                            and Robotics.
-                        </p>
-
-                        <button>
-                            Enroll Now
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-            {/* ================= WHY KIDS LOVE CHIFRICA ================= */}
-
-            <section className="why-kids">
-
-                <div className="section-title">
-
-                    <h2>Why Kids Love Chifrica</h2>
-
-                    <p>
-                        We make learning exciting through hands-on projects,
-                        fun activities, games and creative challenges.
-                    </p>
-
-                </div>
-
-                <div className="why-grid">
-
-                    <div className="why-card">
-
-                        <div className="why-icon">🎮</div>
-
-                        <h3>Game-Based Learning</h3>
-
-                        <p>
-                            Every lesson feels like a game, making learning
-                            programming enjoyable and engaging.
-                        </p>
-
-                    </div>
-
-                    <div className="why-card">
-
-                        <div className="why-icon">🏆</div>
-
-                        <h3>Earn Rewards</h3>
-
-                        <p>
-                            Collect stars, badges and certificates as you complete
-                            exciting coding challenges.
-                        </p>
-
-                    </div>
-
-                    <div className="why-card">
-
-                        <div className="why-icon">👩‍🏫</div>
-
-                        <h3>Friendly Teachers</h3>
-
-                        <p>
-                            Learn from experienced instructors who make technology
-                            simple and fun for every child.
-                        </p>
-
-                    </div>
-
-                    <div className="why-card">
-
-                        <div className="why-icon">🤝</div>
-
-                        <h3>Team Projects</h3>
-
-                        <p>
-                            Work together with friends on exciting coding and
-                            robotics projects.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-            {/* ================= LEARNING PATHS ================= */}
-
-            <section className="learning-paths">
-
-                <div className="section-title">
-
-                    <h2>Popular Learning Paths</h2>
-
-                    <p>
-                        Choose a learning adventure and grow your digital skills
-                        step by step.
-                    </p>
-
-                </div>
-
-                <div className="paths-grid">
-
-                    <div className="path-card">
-
-                        <span className="course-icon">🎨</span>
-
-                        <h3>Scratch Programming</h3>
-
-                        <p>
-                            Create animations, stories and games using drag-and-drop
-                            programming.
-                        </p>
-
-                        <button>Learn More</button>
-
-                    </div>
-
-                    <div className="path-card">
-
-                        <span className="course-icon">🐍</span>
-
-                        <h3>Python for Kids</h3>
-
-                        <p>
-                            Learn one of the world's most popular programming
-                            languages in a fun way.
-                        </p>
-
-                        <button>Learn More</button>
-
-                    </div>
-
-                    <div className="path-card">
-
-                        <span className="course-icon">🌐</span>
-
-                        <h3>Web Development</h3>
-
-                        <p>
-                            Build beautiful websites with HTML, CSS and JavaScript.
-                        </p>
-
-                        <button>Learn More</button>
-
-                    </div>
-
-                    <div className="path-card">
-
-                        <span className="course-icon">🤖</span>
-
-                        <h3>Robotics</h3>
-
-                        <p>
-                            Discover how robots work through practical projects and
-                            exciting experiments.
-                        </p>
-
-                        <button>Learn More</button>
-
-                    </div>
-
-                    <div className="path-card">
-
-                        <span className="course-icon">🧠</span>
-
-                        <h3>Artificial Intelligence</h3>
-
-                        <p>
-                            Explore the amazing world of AI with beginner-friendly
-                            activities.
-                        </p>
-
-                        <button>Learn More</button>
-
-                    </div>
-
-                    <div className="path-card">
-
-                        <span className="course-icon">📱</span>
-
-                        <h3>Mobile App Development</h3>
-
-                        <p>
-                            Design and build your very first Android applications.
-                        </p>
-
-                        <button>Learn More</button>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-            {/* ================= FEATURED COURSES ================= */}
-
-            <section className="featured-courses">
-
-                <div className="section-title">
-
-                    <h2>Featured Coding Courses</h2>
-
-                    <p>
-                        Start with one of our most popular technology courses
-                        specially designed for young learners.
-                    </p>
-
-                </div>
-
-                <div className="courses-grid">
-
-                    <div className="course-card">
-
-                        <img
-                            src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800"
-                            alt="Scratch Programming"
-                        />
-
-                        <div className="course-info">
-
-                            <span className="level beginner">
-                                Beginner
-                            </span>
-
-                            <h3>Scratch Programming</h3>
-
-                            <p>
-                                Learn coding through games, animations and
-                                storytelling.
-                            </p>
-
-                            <div className="course-footer">
-
-                                <span>⭐ 4.9</span>
-
-                                <span>👦 320 Students</span>
-
-                            </div>
-
-                            <button>
-                                Start Learning
+                <div className="kids-age-tabs" role="tablist" aria-label="Learning age groups">
+                    {ageGroups.map((group) => {
+                        const Icon = group.icon;
+                        return (
+                            <button
+                                key={group.id}
+                                type="button"
+                                role="tab"
+                                aria-selected={activeAge === group.id}
+                                className={`${group.accent}${activeAge === group.id ? " is-active" : ""}`}
+                                onClick={() => setActiveAge(group.id)}
+                            >
+                                <Icon aria-hidden="true" />
+                                <span><small>{group.ages}</small><strong>{group.title}</strong></span>
                             </button>
-
-                        </div>
-
-                    </div>
-
-                    <div className="course-card">
-
-                        <img
-                            src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800"
-                            alt="Python"
-                        />
-
-                        <div className="course-info">
-
-                            <span className="level intermediate">
-                                Intermediate
-                            </span>
-
-                            <h3>Python for Kids</h3>
-
-                            <p>
-                                Build exciting mini projects while learning Python.
-                            </p>
-
-                            <div className="course-footer">
-
-                                <span>⭐ 4.8</span>
-
-                                <span>👦 172 Students</span>
-
-                            </div>
-
-                            <button>
-                                Start Learning
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                    <div className="course-card">
-
-                        <img
-                            src="https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=800"
-                            alt="Robotics"
-                        />
-
-                        <div className="course-info">
-
-                            <span className="level advanced">
-                                Advanced
-                            </span>
-
-                            <h3>Robotics for Kids</h3>
-
-                            <p>
-                                Design, build and program your own smart robots.
-                            </p>
-
-                            <div className="course-footer">
-
-                                <span>⭐ 5.0</span>
-
-                                <span>👦 70 Students</span>
-
-                            </div>
-
-                            <button>
-                                Join Class
-                            </button>
-
-                        </div>
-
-                    </div>
-
+                        );
+                    })}
                 </div>
-
-            </section>
-
-            {/* ================= ACHIEVEMENT BADGES ================= */}
-
-            <section className="achievement-section">
-
-                <div className="section-title">
-
-                    <h2>Earn Amazing Rewards</h2>
-
-                    <p>
-                        Every lesson completed brings you closer to exciting
-                        achievements.
-                    </p>
-
-                </div>
-
-                <div className="badge-grid">
-
-                    <div className="badge-card">
-
-                        <div className="badge-icon">
-                            🥇
-                        </div>
-
-                        <h3>Gold Coder</h3>
-
-                        <p>
-                            Complete 20 coding lessons.
-                        </p>
-
-                    </div>
-
-                    <div className="badge-card">
-
-                        <div className="badge-icon">
-                            🚀
-                        </div>
-
-                        <h3>Rocket Builder</h3>
-
-                        <p>
-                            Finish your first programming project.
-                        </p>
-
-                    </div>
-
-                    <div className="badge-card">
-
-                        <div className="badge-icon">
-                            🤖
-                        </div>
-
-                        <h3>Robot Master</h3>
-
-                        <p>
-                            Successfully complete the Robotics pathway.
-                        </p>
-
-                    </div>
-
-                    <div className="badge-card">
-
-                        <div className="badge-icon">
-                            👑
-                        </div>
-
-                        <h3>Coding Champion</h3>
-
-                        <p>
-                            Finish every beginner course.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-            {/* ================= WEEKLY CHALLENGE ================= */}
-
-            <section className="weekly-challenge">
-
-                <div className="challenge-content">
-
+                <div className="kids-age-result" role="tabpanel">
                     <div>
-
-                        <h2>
-                            🎯 Weekly Coding Challenge
-                        </h2>
-
-                        <p>
-                            Build a simple game this week and win exciting
-                            digital badges and certificates.
-                        </p>
-
+                        <p>{selectedAge.ages}</p>
+                        <h3>{selectedAge.title}</h3>
+                        <span>{selectedAge.description}</span>
                     </div>
-
-                    <button>
-                        Join Challenge
+                    <ul>
+                        {selectedAge.courses.map((course) => (
+                            <li key={course}><FiCheck aria-hidden="true" /> {course}</li>
+                        ))}
+                    </ul>
+                    <button type="button" onClick={() => navigate("/courses")}>
+                        Explore learning path <FiArrowRight aria-hidden="true" />
                     </button>
-
                 </div>
-
             </section>
 
-            {/* ================= STUDENT LEADERBOARD ================= */}
-
-            <section className="leaderboard">
-
-                <div className="section-title">
-
-                    <h2>🏆 Top Young Coders</h2>
-
-                    <p>
-                        Celebrate students who are making amazing progress.
-                    </p>
-
+            <section className="kids-learning" aria-labelledby="kids-learning-title">
+                <div className="kids-section-heading">
+                    <p>POPULAR PROGRAMMES</p>
+                    <h2 id="kids-learning-title">Where will curiosity take you?</h2>
                 </div>
-
-                <div className="leaderboard-grid">
-
-                    <div className="leader-card">
-
-                        <div className="rank">🥇</div>
-
-                        <img
-                            src="https://randomuser.me/api/portraits/girls/44.jpg"
-                            alt="Student"
-                        />
-
-                        <h3>Sarah Johnson</h3>
-
-                        <span>Python Explorer</span>
-
-                        <h4>4,950 XP</h4>
-
-                    </div>
-
-                    <div className="leader-card">
-
-                        <div className="rank">🥈</div>
-
-                        <img
-                            src="https://randomuser.me/api/portraits/boys/41.jpg"
-                            alt="Student"
-                        />
-
-                        <h3>Daniel Smith</h3>
-
-                        <span>Scratch Champion</span>
-
-                        <h4>4,600 XP</h4>
-
-                    </div>
-
-                    <div className="leader-card">
-
-                        <div className="rank">🥉</div>
-
-                        <img
-                            src="https://randomuser.me/api/portraits/girls/52.jpg"
-                            alt="Student"
-                        />
-
-                        <h3>Grace Williams</h3>
-
-                        <span>Web Designer</span>
-
-                        <h4>4,350 XP</h4>
-
-                    </div>
-
+                <div className="kids-path-grid">
+                    {learningPaths.map((path) => {
+                        const Icon = path.icon;
+                        return (
+                            <article className={`kids-path-card ${path.accent}`} key={path.title}>
+                                <div className="kids-path-icon"><Icon aria-hidden="true" /></div>
+                                <div className="kids-path-meta">
+                                    <span>{path.level}</span>
+                                    <span>Self-paced</span>
+                                </div>
+                                <h3>{path.title}</h3>
+                                <p>{path.description}</p>
+                                <button type="button" onClick={() => navigate("/courses")} aria-label={`Explore ${path.title}`}>
+                                    View programme <FiArrowRight aria-hidden="true" />
+                                </button>
+                            </article>
+                        );
+                    })}
                 </div>
-
             </section>
 
-            {/* ================= PARENTS TESTIMONIALS ================= */}
-
-            <section className="parents-section">
-
-                <div className="section-title">
-
-                    <h2>❤️ Parents Love Chifrica</h2>
-
-                    <p>
-                        Hear what parents are saying about their children's
-                        learning experience.
-                    </p>
-
+            <section className="kids-challenge">
+                <div className="kids-challenge-copy">
+                    <p>THIS WEEK'S CHALLENGE</p>
+                    <h2>Can you build a <em>mini robot race?</em></h2>
+                    <span>Join students across the academy and earn your Builder Badge.</span>
                 </div>
-
-                <div className="testimonial-grid">
-
-                    <div className="testimonial-card">
-
-                        <p>
-                            "My son now builds simple games on his own.
-                            Chifrica made coding exciting and easy."
-                        </p>
-
-                        <h4>— Mrs. Okafor</h4>
-
+                <div className="kids-challenge-board">
+                    <div className="kids-challenge-number"><strong>48</strong><span>hours left</span></div>
+                    <div className="kids-challenge-progress">
+                        <span>Community progress</span>
+                        <strong>72%</strong>
+                        <div><i /></div>
                     </div>
-
-                    <div className="testimonial-card">
-
-                        <p>
-                            "The teachers are patient and supportive.
-                            My daughter looks forward to every lesson."
-                        </p>
-
-                        <h4>— Mr. Bello</h4>
-
-                    </div>
-
-                    <div className="testimonial-card">
-
-                        <p>
-                            "The weekly coding challenges keep my children
-                            motivated to continue learning."
-                        </p>
-
-                        <h4>— Mrs. Ibrahim</h4>
-
-                    </div>
-
+                    <button type="button" onClick={() => navigate("/register")}>
+                        Join the challenge <FiArrowRight aria-hidden="true" />
+                    </button>
                 </div>
-
             </section>
 
-            {/* ================= STUDENT PROJECT GALLERY ================= */}
-
-            <section className="project-gallery">
-
-                <div className="section-title">
-
-                    <h2>🎨 Student Project Gallery</h2>
-
-                    <p>
-                        Amazing projects created by our young programmers.
-                    </p>
-
+            <section className="kids-trust">
+                <div className="kids-section-heading">
+                    <p>WHY FAMILIES CHOOSE US</p>
+                    <h2>Learning that feels exciting—and stays meaningful</h2>
                 </div>
-
-                <div className="gallery-grid">
-
-                    <div className="gallery-card">
-
-                        <img
-                            src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=900"
-                            alt="Project"
-                        />
-
-                        <h3>Drawing App</h3>
-
-                    </div>
-
-                    <div className="gallery-card">
-
-                        <img
-                            src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=900"
-                            alt="Project"
-                        />
-
-                        <h3>Mini Game</h3>
-
-                    </div>
-
-                    <div className="gallery-card">
-
-                        <img
-                            src="https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=900"
-                            alt="Project"
-                        />
-
-                        <h3>Robot Controller</h3>
-
-                    </div>
-
+                <div className="kids-trust-grid">
+                    <article>
+                        <span><FiGrid aria-hidden="true" /></span>
+                        <h3>Learn through play</h3>
+                        <p>Lessons become adventures through games, challenges and creative projects.</p>
+                    </article>
+                    <article>
+                        <span><FiUsers aria-hidden="true" /></span>
+                        <h3>Supportive instructors</h3>
+                        <p>Patient mentors guide every learner and celebrate progress at every stage.</p>
+                    </article>
+                    <article>
+                        <span><FiAward aria-hidden="true" /></span>
+                        <h3>Real achievements</h3>
+                        <p>Complete projects, earn badges and build a portfolio children are proud to share.</p>
+                    </article>
                 </div>
-
             </section>
 
-            {/* ================= CALL TO ACTION ================= */}
-
-            <section className="kids-cta">
-
-                <div className="cta-box">
-
-                    <h2>
-                        🚀 Ready to Start Coding?
-                    </h2>
-
-                    <p>
-                        Join thousands of children learning programming,
-                        robotics, AI and web development with Chifrica
-                        Institution.
-                    </p>
-
-                    <div className="cta-buttons">
-
-                        <button className="join-btn">
-                            Enroll Today
+            <section className="kids-faq">
+                <div className="kids-section-heading">
+                    <p>PARENT QUESTIONS</p>
+                    <h2>Everything you need to know</h2>
+                </div>
+                {[
+                    ["Does my child need coding experience?", "No. Each programme begins with age-appropriate activities and introduces new concepts step by step."],
+                    ["What does a typical class include?", "A lesson combines a short concept activity, guided practice, independent creation and a friendly progress review."],
+                    ["Can I follow my child's progress?", "Yes. Families receive clear updates on completed work, achievements and the next recommended learning stage."],
+                ].map(([question, answer], index) => (
+                    <article className={openFaq === index ? "is-open" : ""} key={question}>
+                        <button type="button" aria-expanded={openFaq === index} onClick={() => setOpenFaq(openFaq === index ? -1 : index)}>
+                            <span>{question}</span>
+                            <FiChevronDown aria-hidden="true" />
                         </button>
-
-                        <button className="contact-btn">
-                            Talk To An Advisor
-                        </button>
-
-                    </div>
-
-                </div>
-
+                        {openFaq === index && <p>{answer}</p>}
+                    </article>
+                ))}
             </section>
-        </div>
+
+            <section className="kids-final-cta">
+                <div>
+                    <p>THE NEXT BIG IDEA COULD BE THEIRS</p>
+                    <h2>Ready for their technology journey?</h2>
+                </div>
+                <button type="button" onClick={() => navigate("/register")}>
+                    Enrol a young learner <FiArrowRight aria-hidden="true" />
+                </button>
+            </section>
+        </main>
     );
 };
 

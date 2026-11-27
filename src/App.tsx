@@ -13,6 +13,7 @@ import KidsAcademy from './pages/kidAcademy'
 import Footer from './components/footers'
 import Courses from './pages/courses'
 import CourseCatalog from './pages/courseCatalog'
+import Blog from './pages/blog'
 import Profile from './pages/profile'
 import { isSignedIn } from './auth'
 
@@ -44,7 +45,10 @@ function App() {
           <Route path="/statistics" element={<Statistics />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/kidAcademy" element={<KidsAcademy />} />
+          <Route path="/kids-academy" element={<KidsAcademy />} />
           <Route path="/courses" element={<CourseCatalog />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<Blog />} />
           <Route path="/my-learning" element={isSignedIn() ? <Courses /> : <Navigate to="/login" replace />} />
           <Route path="/profile" element={isSignedIn() ? <Profile /> : <Navigate to="/login" replace />} />
           <Route

@@ -711,6 +711,7 @@ const Courses = () => {
                             )}
                             <div className="learning-overview-feedback">
                                 {overviewError && <p className="learning-storage-error" role="alert">{overviewError}</p>}
+                                {serverError && <p className="learning-storage-error" role="alert">{serverError}</p>}
                             </div>
                         </section>
                     </div>
